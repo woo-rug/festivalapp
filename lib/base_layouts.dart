@@ -122,15 +122,35 @@ class FlatScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.transparent,
       appBar : PreferredSize(
         preferredSize: Size.fromHeight(appBarHeight),
         child: appBar,
       ),
-      body: Container(
-        height: bottomNavigationBar != null ? MediaQuery.of(context).size.height - appBarHeight - kBottomNavigationBarHeight : MediaQuery.of(context).size.height - appBarHeight,
-        width: MediaQuery.of(context).size.width,
-        backgroundColor: Colors.white,
-        
+      body: Stack(
+        children: [
+          const Background(),
+          Positioned(
+            top: appBarHeight + MediaQuery.of(context).padding.top,
+            child: Container(
+              height: bottomNavigationBar != null ? MediaQuery.of(context).size.height - appBarHeight - kBottomNavigationBarHeight : MediaQuery.of(context).size.height - appBarHeight,
+              width: MediaQuery.of(context).size.width,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              padding: EdgeInsets.only(
+                left: 25,
+                right: 25,
+              ),
+              child: body,
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: bottomNavigationBar,
     );
