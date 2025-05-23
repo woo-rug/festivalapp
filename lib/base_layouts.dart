@@ -73,8 +73,8 @@ class BottomOnlyWhiteClipper extends CustomClipper<Path> {
   final double curvatureRatio; // 곡률 정도 (0.0 ~ 2.0)
 
   BottomOnlyWhiteClipper({
-    this.startYRatio = 0.05,     // 시작 높이: 30%
-    this.curvatureRatio = 0.2,  // 곡률: 절반 정도만 휘어짐
+    this.startYRatio = 0.05,     // 시작 높이
+    this.curvatureRatio = 0.2,  // 곡률
   });
 
   @override
