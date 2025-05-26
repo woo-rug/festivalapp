@@ -18,7 +18,7 @@ class CurveScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-      final safeAreaHeight = MediaQuery.of(context).size.height -MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom;
+    final safeAreaHeight = MediaQuery.of(context).size.height -MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom;
     return Stack(
       children: [
         const Background(),
@@ -107,14 +107,12 @@ class FlatScreen extends StatelessWidget {
   final Widget appBar;
   final double appBarHeight;
   final Widget body;
-  final Widget? bottomNavigationBar;
 
   const FlatScreen({
     super.key,
     required this.appBar,
     this.appBarHeight = kToolbarHeight,
     required this.body,
-    this.bottomNavigationBar,
   });
   
   get selectedIndex => null;
@@ -126,7 +124,19 @@ class FlatScreen extends StatelessWidget {
       backgroundColor: Colors.transparent,
       appBar : PreferredSize(
         preferredSize: Size.fromHeight(appBarHeight),
-        child: appBar,
+        child: SizedBox(
+          height: appBarHeight,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                appBar,
+              ],
+            )
+            ),
+        ),
       ),
       body: Stack(
         children: [
@@ -134,7 +144,7 @@ class FlatScreen extends StatelessWidget {
           Positioned(
             top: appBarHeight + MediaQuery.of(context).padding.top,
             child: Container(
-              height: bottomNavigationBar != null ? MediaQuery.of(context).size.height - appBarHeight - kBottomNavigationBarHeight : MediaQuery.of(context).size.height - appBarHeight,
+              height: MediaQuery.of(context).size.height - appBarHeight,
               width: MediaQuery.of(context).size.width,
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -144,15 +154,19 @@ class FlatScreen extends StatelessWidget {
                 ),
               ),
               padding: EdgeInsets.only(
-                left: 25,
-                right: 25,
+                left: 16,
+                right: 16,
               ),
-              child: body,
+              child: MediaQuery.removePadding(
+                context: context,
+                removeTop: true,
+                removeBottom: true,
+                child: body,
+              ),
             ),
           ),
         ],
       ),
-      bottomNavigationBar: bottomNavigationBar,
     );
   }
 }

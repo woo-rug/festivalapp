@@ -16,8 +16,8 @@ class Background extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.centerRight,
           colors: [
-            Color(0xFF487fff), // 파란색
-            Color.fromARGB(255, 138, 169, 242),
+            Color(0xFF1976D2), // 파란색
+            Color(0xFF64B5F6),
           ],
         ),
       )
