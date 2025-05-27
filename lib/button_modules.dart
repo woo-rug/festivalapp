@@ -90,4 +90,46 @@ class _CardSliderWithStaticDotsState extends State<CardSliderWithStaticDots> {
   }
 }
 
+class GradientButton extends StatelessWidget {
+  final String text;
+  final VoidCallback onPressed;
 
+  const GradientButton({
+    super.key,
+    required this.text,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 50,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+        ),
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF64B5F6), Color(0xFF1976D2)],
+            ),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Container(
+            alignment: Alignment.center,
+            child: Text(
+              text,
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

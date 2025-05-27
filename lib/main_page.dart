@@ -11,25 +11,20 @@ class MainPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return FlatScreen(
       appBarHeight: 100, // 앱 아이콘 크기에 맞춰서 변경해야 할 부분분
-      appBar : AppBar(
-        title: Container( // 앱 아이콘 삽입 부분분
-          height:60,
-          width:60,
-          color:Colors.grey,
-          child: Center(
-            child: Text(
-              "아이콘",
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w100,
-                color: Colors.black,
-              ),
+      appBar : Container( // 앱 아이콘 삽입 부분분
+        height:60,
+        width:60,
+        color:Colors.grey,
+        child: Center(
+          child: Text(
+            "아이콘",
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w100,
+              color: Colors.black,
             ),
           ),
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        shadowColor: Colors.transparent,
       ),
       body: ListView(
         children: [

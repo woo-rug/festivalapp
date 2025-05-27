@@ -119,20 +119,26 @@ class FlatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool isCenter = appBar is Text || appBar is Column;
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.transparent,
       appBar : PreferredSize(
-        preferredSize: Size.fromHeight(appBarHeight),
+        preferredSize: Size.fromHeight(appBarHeight + MediaQuery.of(context).padding.top),
         child: SizedBox(
-          height: appBarHeight,
+          height: appBarHeight + MediaQuery.of(context).padding.top,
           child: Align(
             alignment: Alignment.centerLeft,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                appBar,
+                AppBar(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  title: appBar,
+                  centerTitle: isCenter,
+                )
               ],
             )
             ),
