@@ -153,10 +153,6 @@ class FlatScreen extends StatelessWidget {
                   topRight: Radius.circular(20),
                 ),
               ),
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-              ),
               child: MediaQuery.removePadding(
                 context: context,
                 removeTop: true,

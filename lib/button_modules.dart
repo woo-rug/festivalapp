@@ -37,7 +37,7 @@ class _CardSliderWithStaticDotsState extends State<CardSliderWithStaticDots> {
               final item = items[index];
 
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                padding: const EdgeInsets.symmetric(horizontal: 0),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: Stack(
@@ -89,3 +89,5 @@ class _CardSliderWithStaticDotsState extends State<CardSliderWithStaticDots> {
     );
   }
 }
+
+
