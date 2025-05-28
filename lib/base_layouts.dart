@@ -3,23 +3,19 @@ import 'package:festivalapp/background.dart';
 
 class CurveScreen extends StatelessWidget {
   final Widget title;
-  final Widget? subtitle;
   final Widget body;
-  final double titleToSubtitleRatio;
 
 
   const CurveScreen({
     super.key,
     required this.title,
-    this.subtitle,
     required this.body,
-    this.titleToSubtitleRatio = 0.04
   });
 
   @override
   Widget build(BuildContext context) {
     final safeAreaHeight = MediaQuery.of(context).size.height -MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom;
-    return Stack(
+    return Scaffold(body: Stack(
       children: [
         const Background(),
         SafeArea(
@@ -33,10 +29,6 @@ class CurveScreen extends StatelessWidget {
                       height: safeAreaHeight * 0.08,
                     ),
                     title,
-                    Container(
-                      height: safeAreaHeight * titleToSubtitleRatio,
-                    ),
-                    if (subtitle != null) subtitle!,
                   ],
                 ),
               ),
@@ -64,7 +56,7 @@ class CurveScreen extends StatelessWidget {
           ),
         ),
       ],
-    );
+    ),);
   }
 }
 

@@ -1,4 +1,7 @@
+import 'package:festivalapp/login_page.dart';
 import 'package:festivalapp/main_page.dart';
+import 'package:festivalapp/register_agree_page.dart';
+import 'package:festivalapp/register_form_page.dart';
 import 'package:flutter/material.dart';
 import 'page_indexer.dart';
 
@@ -19,15 +22,24 @@ class MyApp extends StatelessWidget {
           ),
         fontFamily: 'Noto Sans KR',
       ),
-      home: PageIndexer(
-        pages: const [
-          MainPage(),
-          Center(child: Text('탐색 페이지')),
-          Center(child: Text('폭죽 페이지')),
-          Center(child: Text('기록 페이지')),
-          Center(child: Text('프로필 페이지')),
-        ],
-      ),
+      initialRoute: '/login',
+      routes:{
+        '/login': (context) => LoginPage(),
+        '/register_agree': (context) => RegisterAgreePage(),
+        //'/register_form': (context) => RegisterFormPage(),
+        //'register_additional': (context) => RegisterFormPage(isAdditional: true),
+        '/main': (context) => MainPage(),
+      }
+      //home: LoginPage(),
+      // PageIndexer(
+      //   pages: const [
+      //     MainPage(),
+      //     Center(child: Text('탐색 페이지')),
+      //     Center(child: Text('폭죽 페이지')),
+      //     Center(child: Text('기록 페이지')),
+      //     Center(child: Text('프로필 페이지')),
+      //   ],
+      // ),
     );
   }
 }
