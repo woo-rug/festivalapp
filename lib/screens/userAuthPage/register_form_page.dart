@@ -1,4 +1,7 @@
 import 'package:festivalapp/modules/postcode_page.dart';
+import 'package:festivalapp/modules/title_modules.dart';
+import 'package:festivalapp/screens/userAuthPage/register_additional_page.dart';
+import 'package:festivalapp/screens/userAuthPage/register_result_page.dart';
 import 'package:flutter/material.dart';
 import '../../modules/base_layouts.dart';
 import '../../modules/button_modules.dart';
@@ -14,6 +17,16 @@ class RegisterFormPage extends StatefulWidget {
 
 class _RegisterFormPageState extends State<RegisterFormPage> {
   bool isFormFilled = false;
+
+  final idController = TextEditingController();
+  final pwController = TextEditingController();
+  final pwConfirmController = TextEditingController();
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final emailCodeController = TextEditingController();
+  final nicknameController = TextEditingController();
+  final locationController = TextEditingController();
+  String? selectedGender = '선택하세요';
 
   void updateFormFilled(bool filled) {
     setState(() {
@@ -35,16 +48,49 @@ class _RegisterFormPageState extends State<RegisterFormPage> {
       body: ListView(
         children: [
           const SizedBox(height: 16),
-          SignUpFormContent(onFormValidChange: updateFormFilled),
+          SignUpFormContent(
+            onFormValidChange: updateFormFilled,
+            idController: idController,
+            pwController: pwController,
+            pwConfirmController: pwConfirmController,
+            nameController: nameController,
+            emailController: emailController,
+            emailCodeController: emailCodeController,
+            nicknameController: nicknameController,
+            locationController: locationController,
+            selectedGender: selectedGender,
+            onGenderChanged: (value) => setState(() {
+              selectedGender = value;
+            }),
+          ),
           const SizedBox(height: 100),
         ],
       ),
       floatingActionButton: FloatingButton(
         text: "다음 페이지로",
-        onPressed: isFormFilled
-            ? () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterFormPage()));
-              }
+        onPressed: isFormFilled ? 
+            // () async { // json 형식에 맞게 key값 수정 요망
+            //     final response = await http.post(
+            //       Uri.parse('https://yourserver.com/register'),
+            //       headers: {'Content-Type': 'application/json'},
+            //       body: jsonEncode({
+            //         'id': idController.text,
+            //         'password': pwController.text,
+            //         'name': nameController.text,
+            //         'email': emailController.text,
+            //         'nickname': nicknameController.text,
+            //         'gender': selectedGender,
+            //         'address': locationController.text,
+            //       }),
+            //     );
+
+            //     if (response.statusCode == 200) {
+            //       Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterAdditionalPage()));
+            //     } else {
+            //       Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterResult()));
+            //     }
+            //   }
+            () {Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterAdditionalPage()));} // 일단 서버로 전송 안하고 패스로 구함
             : null,
         isBlue: isFormFilled,
       ),
@@ -120,75 +166,147 @@ class _CommonTextFieldState extends State<CommonTextField> {
 
 class SignUpFormContent extends StatefulWidget {
   final Function(bool) onFormValidChange;
-  const SignUpFormContent({super.key, required this.onFormValidChange});
+  final TextEditingController idController;
+  final TextEditingController pwController;
+  final TextEditingController pwConfirmController;
+  final TextEditingController nameController;
+  final TextEditingController emailController;
+  final TextEditingController emailCodeController;
+  final TextEditingController nicknameController;
+  final TextEditingController locationController;
+  final String? selectedGender;
+  final Function(String?) onGenderChanged;
+
+  const SignUpFormContent({
+    super.key,
+    required this.onFormValidChange,
+    required this.idController,
+    required this.pwController,
+    required this.pwConfirmController,
+    required this.nameController,
+    required this.emailController,
+    required this.emailCodeController,
+    required this.nicknameController,
+    required this.locationController,
+    required this.selectedGender,
+    required this.onGenderChanged,
+  });
 
   @override
   State<SignUpFormContent> createState() => _SignUpFormContentState();
 }
 
 class _SignUpFormContentState extends State<SignUpFormContent> {
-  final idController = TextEditingController();
-  final pwController = TextEditingController();
-  final pwConfirmController = TextEditingController();
-  final nameController = TextEditingController();
-  final emailController = TextEditingController();
-  final emailCodeController = TextEditingController();
-  final nicknameController = TextEditingController();
-  final locationController = TextEditingController();
-  final genderList = ['남성', '여성', '선택안함'];
+  final genderList = ['선택하세요', '남성', '여성'];
 
-  String selectedGender = '선택안함';
   bool? isPasswordMatch;
   bool isPasswordSafe = false;
   bool isIdAvailable = false;
+  bool isNicknameAvailable = false;
+  bool isEmailValid = true;
 
   @override
   void initState() {
     super.initState();
-    pwController.addListener(_checkPasswordMatch);
-    pwConfirmController.addListener(_checkPasswordMatch);
-  }
-
-  void _checkPasswordMatch() {
-    final pw = pwController.text;
-    final confirm = pwConfirmController.text;
-    final regex = RegExp(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}\$');
-
-    setState(() {
-      isPasswordMatch = (pw.isNotEmpty && confirm.isNotEmpty) ? pw == confirm : null;
-      isPasswordSafe = regex.hasMatch(pw);
+    widget.pwController.addListener(() {
+      _checkPasswordMatch();
+      _checkAllFilled();
+    });
+    widget.pwConfirmController.addListener(() {
+      _checkPasswordMatch();
       _checkAllFilled();
     });
   }
 
+  void _checkPasswordMatch() {
+    final pw = widget.pwController.text;
+    final confirm = widget.pwConfirmController.text;
+    final regex = RegExp(r'^(?=.*[A-Za-z])(?=.*\d).{8,}$');
+
+    setState(() {
+      isPasswordMatch = (pw.isNotEmpty && confirm.isNotEmpty) ? pw == confirm : null;
+      isPasswordSafe = regex.hasMatch(pw);
+    });
+    _checkAllFilled();
+  }
+
   void _checkAllFilled() {
     bool filled =
-        idController.text.isNotEmpty &&
+        widget.idController.text.isNotEmpty &&
         isIdAvailable &&
-        pwController.text.isNotEmpty &&
+        widget.pwController.text.isNotEmpty &&
         isPasswordSafe &&
-        pwConfirmController.text.isNotEmpty &&
+        widget.pwConfirmController.text.isNotEmpty &&
         isPasswordMatch == true &&
-        nameController.text.isNotEmpty &&
-        emailController.text.isNotEmpty &&
-        emailCodeController.text.isNotEmpty &&
-        locationController.text.isNotEmpty &&
-        nicknameController.text.isNotEmpty;
+        widget.nameController.text.isNotEmpty &&
+        widget.emailController.text.isNotEmpty &&
+        widget.emailCodeController.text.isNotEmpty &&
+        widget.locationController.text.isNotEmpty &&
+        widget.nicknameController.text.isNotEmpty &&
+        isNicknameAvailable &&
+        isEmailValid &&
+        widget.selectedGender != null &&
+        widget.selectedGender != '선택하세요';
 
     widget.onFormValidChange(filled);
   }
 
   Future<void> _checkIdDuplicate() async {
-    final response = await http.get(Uri.parse('https://your.api/check-id?id=${idController.text}'));
-    if (response.statusCode == 200 && jsonDecode(response.body)['available'] == true) {
-      setState(() {
-        isIdAvailable = true;
-      });
-    } else {
-      setState(() {
-        isIdAvailable = false;
-      });
-    }
+    // api 지원 이후 수정 예정
+    // final response = await http.get(Uri.parse('https://server.com/check-id?id=${widget.idController.text}'));
+    // if (response.statusCode == 200 && jsonDecode(response.body)['available'] == true) {
+    //   setState(() {
+    //     isIdAvailable = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     isIdAvailable = false;
+    //   });
+    // }
+    setState(() {
+      isIdAvailable = true; // 임시 코드
+    });
+
+    _checkAllFilled();
+  }
+
+  Future<void> _checkNicknameDuplicate() async {
+    // api 지원 이후 수정 예정
+    // final response = await http.get(Uri.parse('https://server.com/check-nickname?nickname=${widget.nicknameController.text}'));
+    // if (response.statusCode == 200 && jsonDecode(response.body)['available'] == true) {
+    //   setState(() {
+    //     isNicknameAvailable = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     isNicknameAvailable = false;
+    //   });
+    // }
+    setState(() {
+      isNicknameAvailable = true; // 임시 코드
+    });
+    
+    _checkAllFilled();
+  }
+
+  Future<void> _sendEmailVerification() async {
+    // final response = await http.post(
+    //   Uri.parse('https://yourserver.com/send-email'),
+    //   headers: {'Content-Type': 'application/json'},
+    //   body: jsonEncode({'email': widget.emailController.text}),
+    // );
+    // if (response.statusCode == 200) {
+    //   // success handling
+    // } else {
+    //   // error handling
+    // }
+  }
+
+  void _validateEmailFormat(String email) {
+    final regex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    setState(() {
+      isEmailValid = regex.hasMatch(email);
+    });
     _checkAllFilled();
   }
 
@@ -199,7 +317,7 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("정보 입력", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+          TitleModules.title("회원 정보 입력"),
           const SizedBox(height: 16),
 
           Row(
@@ -208,7 +326,7 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
               Expanded(
                 child: CommonTextField(
                   label: "아이디",
-                  controller: idController,
+                  controller: widget.idController,
                   hintText: "아이디 입력",
                   onChanged: (_) => setState(() => isIdAvailable = false),
                 ),
@@ -218,18 +336,29 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
             ],
           ),
           if (isIdAvailable)
-            const Text("✔ 사용 가능한 아이디입니다.", style: TextStyle(color: Colors.green, fontSize: 13)),
+            const Text("✅ 사용 가능한 아이디입니다.", style: TextStyle(color: Colors.green, fontSize: 13)),
 
           const SizedBox(height: 16),
 
-          CommonTextField(label: "비밀번호", controller: pwController, hintText: "비밀번호", isPassword: true),
+          CommonTextField(
+            label: "비밀번호",
+            controller: widget.pwController,
+            hintText: "비밀번호",
+            isPassword: true,
+            onChanged: (_) => _checkAllFilled(),
+          ),
           const SizedBox(height: 8),
           Text(
-            isPasswordSafe ? "✅ 안전한 비밀번호입니다." : "❌ 최소 8자, 영문+숫자 조합이 필요합니다.",
+            isPasswordSafe ? "✅ 안전한 비밀번호입니다." : "❌ 최소 8자, 적어도 1개 이상의 영문, 숫자가 필요합니다.",
             style: TextStyle(color: isPasswordSafe ? Colors.green : Colors.red, fontSize: 13),
           ),
           const SizedBox(height: 8),
-          CommonTextField(label: "비밀번호 확인", controller: pwConfirmController, isPassword: true),
+          CommonTextField(
+            label: "비밀번호 확인",
+            controller: widget.pwConfirmController,
+            isPassword: true,
+            onChanged: (_) => _checkAllFilled(),
+          ),
           if (isPasswordMatch != null)
             Text(
               isPasswordMatch == true ? "비밀번호가 일치합니다." : "비밀번호가 일치하지 않습니다.",
@@ -237,46 +366,54 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
             ),
 
           const SizedBox(height: 16),
-          CommonTextField(label: "이름", controller: nameController, onChanged: (_) => _checkAllFilled()),
+          CommonTextField(label: "이름", controller: widget.nameController, onChanged: (_) => _checkAllFilled()),
           const SizedBox(height: 16),
 
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
-                child: CommonTextField(label: "이메일", controller: emailController, hintText: "이메일 입력", onChanged: (_) => _checkAllFilled()),
+                child: CommonTextField(
+                  label: "이메일",
+                  controller: widget.emailController,
+                  hintText: "이메일 입력",
+                  onChanged: _validateEmailFormat,
+                ),
               ),
               const SizedBox(width: 8),
-              GradientButton(text: '이메일 보내기', onPressed: () {}, isBlue: true, width: 180),
+              GradientButton(text: '이메일 보내기', onPressed: _sendEmailVerification, isBlue: true, width: 180),
             ],
           ),
+          if (!isEmailValid)
+            const Text("❌ 이메일 형식이 맞지 않습니다.", style: TextStyle(color: Colors.red, fontSize: 13)),
           const SizedBox(height: 8),
-          CommonTextField(label: "인증번호", controller: emailCodeController, onChanged: (_) => _checkAllFilled()),
+          CommonTextField(label: "인증번호", controller: widget.emailCodeController, onChanged: (_) => _checkAllFilled()),
 
           const SizedBox(height: 16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
-                child: CommonTextField(label: "주소", controller: locationController, readOnly: true),
+                child: CommonTextField(label: "주소", controller: widget.locationController, readOnly: true),
               ),
               const SizedBox(width: 8),
               GradientButton(
                 text: '주소 검색',
                 onPressed: () async {
-                  Navigator.push(
+                  final selectedAddress = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => PostcodePage(
-                        onAddressSelected: (String selected) {
-                          setState(() {
-                            locationController.text = selected;
-                          });
-                          _checkAllFilled();
-                        },
-                      ),
+                      builder: (_) => PostcodePage(),
                     ),
                   );
+
+                  if (selectedAddress != null) {
+                    setState(() {
+                      // Assume selectedAddress has a .roadAddress property.
+                      widget.locationController.text = selectedAddress.roadAddress;
+                    });
+                    _checkAllFilled();
+                  }
                 },
                 isBlue: true,
                 width: 150,
@@ -289,23 +426,34 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
-                child: CommonTextField(label: "닉네임", controller: nicknameController, onChanged: (_) => _checkAllFilled()),
+                child: CommonTextField(label: "닉네임", controller: widget.nicknameController, onChanged: (_) => _checkAllFilled()),
               ),
               const SizedBox(width: 8),
-              GradientButton(text: '중복확인', onPressed: () {}, isBlue: true, width: 150),
+              GradientButton(text: '중복확인', onPressed: _checkNicknameDuplicate, isBlue: true, width: 150),
             ],
           ),
+          if (isNicknameAvailable)
+            const Text("✅ 사용 가능한 닉네임입니다.", style: TextStyle(color: Colors.green, fontSize: 13)),
 
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: selectedGender,
+            value: widget.selectedGender,
             decoration: const InputDecoration(
               labelText: "성별",
               border: OutlineInputBorder(),
               contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
             ),
-            items: genderList.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
-            onChanged: (value) => setState(() => selectedGender = value!),
+            items: genderList.map((g) {
+              return DropdownMenuItem<String>(
+                value: g,
+                child: Text(g),
+                enabled: g != '선택하세요',
+              );
+            }).toList(),
+            onChanged: (value) {
+              widget.onGenderChanged(value);
+              _checkAllFilled();
+            },
           ),
         ],
       ),

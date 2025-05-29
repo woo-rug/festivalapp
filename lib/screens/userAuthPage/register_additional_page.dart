@@ -1,55 +1,89 @@
+import 'dart:convert';
+import 'package:festivalapp/modules/title_modules.dart';
+import 'package:http/http.dart' as http;
+import 'package:festivalapp/screens/userAuthPage/register_result_page.dart';
+
 import '../../modules/base_layouts.dart';
 import '../../modules/button_modules.dart';
 import 'package:flutter/material.dart';
+import 'register_result_page.dart';
 
-class ExampleFlat extends StatelessWidget {
-  const ExampleFlat({super.key});
+class RegisterAdditionalPage extends StatefulWidget {
+  const RegisterAdditionalPage({super.key});
+
+  @override
+  State<RegisterAdditionalPage> createState() => _RegisterAdditionalPageState();
+}
+
+class _RegisterAdditionalPageState extends State<RegisterAdditionalPage> {
+  bool isComplete = false;
+  final GlobalKey<_AdditionalInfoSectionState> _sectionKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
-    return FlatScreen( // base_layouts.dart에서 정의된 FlatScreen 위젯 사용
-      appBarHeight: 80, // 앱바 높이, 따로 설정할 필요 없다면 삭제하시면 됩니다!
+    return FlatScreen(
       appBar : AppBar(
         iconTheme: IconThemeData(
-          color: Colors.white, // 앱바의 아이콘 색상, 변경 안하셔도 됩니다.
+          color: Colors.white,
         ),
         title: Text(
-          "회원가입", // 여기 부분만 페이지에 맞게 수정하시면 됩니다!
-          style: TextStyle( // 굳이 건드릴 필요 없을 것 같습니다!
-            fontSize: 18, // 앱바의 글자 크기
-            fontWeight: FontWeight.w700, // 앱바의 글자 두께
-            color: Colors.white, // 앱바의 글자 색상
+          "회원가입", 
+          style: TextStyle( 
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
           ),
         ),
-        centerTitle: true, // 앱바 글자 중앙 정렬
+        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         shadowColor: Colors.transparent,
       ),
       body: ListView(
         children: [
-          //필요하신 위젯을 여기에 추가하시면 됩니다! ListView 아니어도 괜찮고 편하신 모듈로 사용하시면 되는데,
-          // ListView가 스크롤이 가능해서 이걸 중심으로 사용하시는 것을 추천드리긴 합니다.
+          SizedBox(height: 16),
 
+          TitleModules.title("추가 정보 입력"),
+
+          AdditionalInfoSection(
+            key: _sectionKey,
+            userName: "홍길동",
+            onAnswerComplete: (value) => setState(() => isComplete = value),
+          ),
           SizedBox(height: 16), // 위젯 사이 간격 조정, 윗부분에 간격 두는 용도
-
-          //const Padding(padding: EdgeInsets.symmetric(horizontal: 16.0),child: SelectableTabRow(),), //한 라인 두 버튼 위젯
-          //const ScrollableTextList(),//그냥 테스트용 의미없음
-          //const TermsAgreementSection(),//약관 동의 화면 위젯
-          //SignUpFormContent(), //정보 입력 화면 위젯
-          AdditionalInfoSection(userName: "홍길동"),//추가 정보 입력 화면 위젯
-          //IdResultBox(userName: "홍길동", userId: "abc123",),//투명 둥근 네모 박스 위젯
-
-          SizedBox(height: 16), // 위젯 사이 간격 조정, 윗부분에 간격 두는 용도
-
-          GradientButton(//각 페이지 위젯 번호 부여하고 수정
-            text: "다음 페이지로",
-            isBlue: true,
-            onPressed: () {
-              Navigator.pop(context); // 버튼 사용 예제, 이전 페이지로 이동
-            },
-          )
         ],
+      ),
+      floatingActionButton: FloatingButton(
+        text: "다음 페이지로",
+        onPressed: isComplete ? 
+        // () async {
+        //       final selectedIndexes = _sectionKey.currentState?.selectedIndexes;
+        //       final selectedAnswers = _sectionKey.currentState?.questions.asMap().entries.map((entry) {
+        //         final qIndex = entry.key;
+        //         final q = entry.value;
+        //         final selected = selectedIndexes?[qIndex];
+        //         return {
+        //           'question': q['text'],
+        //           'answer': selected != null ? q['options'][selected] : null
+        //         };
+        //       }).toList();
+
+        //       final response = await http.post(
+        //         Uri.parse('https://yourserver.com/submit-answers'),
+        //         headers: {'Content-Type': 'application/json'},
+        //         body: jsonEncode({'answers': selectedAnswers}),
+        //       );
+
+        //       Navigator.push(
+        //         context,
+        //         MaterialPageRoute(builder: (_) => RegisterResult(
+        //           //success: response.statusCode == 200
+        //         )),
+        //       );
+        //     }
+        () {Navigator.push(context,MaterialPageRoute(builder: (_) => RegisterResult(success:true)));}
+          : null,
+        isBlue: isComplete ? true : false,
       ),
     );
   }
@@ -57,96 +91,196 @@ class ExampleFlat extends StatelessWidget {
 
 
 //추가 정보 입력 위젯
-class AdditionalInfoSection extends StatelessWidget {
+class AdditionalInfoSection extends StatefulWidget {
   final String userName;
+  final Function(bool) onAnswerComplete;
 
   const AdditionalInfoSection({
     super.key,
     required this.userName,
+    required this.onAnswerComplete,
   });
 
   @override
+  State<AdditionalInfoSection> createState() => _AdditionalInfoSectionState();
+}
+
+class _AdditionalInfoSectionState extends State<AdditionalInfoSection> {
+  final PageController _pageController = PageController();
+  int currentPage = 0;
+  List<int?> selectedIndexes = [null, null, null];
+
+  final List<Map<String, dynamic>> questions = [
+    {
+      "text": "1. 사용자가 가장 선호하는 문화활동을 선택해주세요.",
+      "options": ["축제", "콘서트", "뮤지컬",],
+    },
+    {
+      "text": "2. 가장 자주 참여하는 문화활동을 선택해주세요.",
+      "options": ["야구 경기", "농구 경기", "배구 경기"],
+    },
+    {
+      "text": "3. 앞으로 참여해보고 싶은 문화활동을 선택해주세요.",
+      "options": ["시사회", "강연", "체험 행사"],
+    }
+  ];
+
+  void _checkCompletion() {
+    bool complete = selectedIndexes.every((element) => element != null);
+    widget.onAnswerComplete(complete);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 제목
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
-          child: Text(
-            "추가 정보 입력",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
+    return SizedBox(
+      height: 320,
+      child: Column(
+        children: [
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: questions.length,
+              itemBuilder: (context, pageIndex) {
+                final question = questions[pageIndex];
+                final options = question["options"] as List<String>;
+                return _buildQuestionBlock(
+                  question: question["text"] as String,
+                  options: options,
+                  selectedIndex: selectedIndexes[pageIndex],
+                  onSelect: (index) {
+                    setState(() {
+                      selectedIndexes[pageIndex] = index;
+                    });
+                    _checkCompletion();
+                  },
+                );
+              },
+              onPageChanged: (index) {
+                setState(() {
+                  currentPage = index;
+                });
+              },
             ),
           ),
-        ),
-
-        // 질문 문구
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
-          child: Text(
-            "2. ${userName}님이 관심있어 하는 문화생활을 모두 선택해주세요.",
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                if (currentPage > 0)
+                  GradientButton(
+                    text: "이전 질문", 
+                    onPressed: () {
+                      if (currentPage > 0) {
+                        _pageController.previousPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      }
+                    }, 
+                    isBlue: false,
+                    width:120,
+                    height: 50,
+                  )
+              ],
             ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
 
-        // 선택 버튼들 (Wrap으로 감싸기)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
-          child: Wrap(
-            children: const [
-              SelectableTag(text: "축제"),
-              SelectableTag(text: "콘서트"),
-              SelectableTag(text: "뮤지컬"),
-              SelectableTag(text: "야구 경기"),
-              SelectableTag(text: "시사회"),
-            ],
+  Widget _buildQuestionBlock({
+    required String question,
+    required List<String> options,
+    required int? selectedIndex,
+    required Function(int) onSelect,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            question,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          Wrap(
+            children: List.generate(options.length, (index) {
+              final isSelected = selectedIndex == index;
+              return SelectableTag(
+                text: options[index],
+                isSelected: isSelected,
+                onTap: () async {
+                  onSelect(index);
+                  await Future.delayed(const Duration(milliseconds: 300)); // delay to allow animation to show
+                  if (currentPage < questions.length - 1) {
+                    _pageController.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  }
+                },
+              );
+            }),
+          ),
+        ],
+      ),
     );
   }
 }
 
-//버튼 위젯
-class SelectableTag extends StatefulWidget {
+// 버튼 위젯 (with animated gradient, no scale)
+class SelectableTag extends StatelessWidget {
   final String text;
+  final bool isSelected;
+  final VoidCallback onTap;
 
-  const SelectableTag({super.key, required this.text});
-
-  @override
-  State<SelectableTag> createState() => _SelectableTagState();
-}
-
-class _SelectableTagState extends State<SelectableTag> {
-  bool isSelected = false;
+  const SelectableTag({
+    super.key,
+    required this.text,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = isSelected ? const Color(0xFF487FFF) : Colors.grey.shade300;
-    final textColor = isSelected ? Colors.white : Colors.black87;
+    final gradient = isSelected
+        ? const LinearGradient(
+            colors: [Color(0xFF64B5F6), Color(0xFF1976D2)],
+            begin: Alignment.bottomRight,
+            end: Alignment.topLeft,
+          )
+        : const LinearGradient(
+            colors: [Color.fromARGB(255, 230, 230, 230), Color.fromARGB(255, 200, 200, 200)],
+            begin: Alignment.bottomRight,
+            end: Alignment.topLeft,
+          );
 
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          isSelected = !isSelected;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
         margin: const EdgeInsets.all(6),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: backgroundColor,
+          gradient: gradient,
           borderRadius: BorderRadius.circular(12),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 3,
+              offset: Offset(1, 1),
+            ),
+          ],
         ),
         child: Text(
-          widget.text,
+          text,
           style: TextStyle(
-            color: textColor,
+            color: isSelected ? Colors.white : Colors.black,
             fontWeight: FontWeight.w500,
             fontSize: 15,
           ),

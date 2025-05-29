@@ -61,11 +61,7 @@ class CurveScreen extends StatelessWidget {
                   color: Colors.white,
                   child : Stack(
                     children: [
-                      Column(
-                        children: [
-                          body,
-                        ],
-                      )
+                      body,
                     ],
                   ),
                 )
@@ -135,10 +131,11 @@ class FlatScreen extends StatelessWidget {
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.transparent,
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(appBarHeight + MediaQuery.of(context).padding.top),
+        preferredSize: Size.fromHeight(appBarHeight),
         child: AppBar(
           automaticallyImplyLeading: true,
           backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
           elevation: 0,
           leading: null,
           iconTheme: const IconThemeData(color: Colors.white),

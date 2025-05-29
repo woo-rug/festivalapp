@@ -1,6 +1,7 @@
 import 'package:festivalapp/modules/postcode_page.dart';
 import 'package:festivalapp/screens/userAuthPage/login_page.dart';
 import 'package:festivalapp/screens/main_page.dart';
+import 'package:festivalapp/screens/userAuthPage/register_additional_page.dart';
 import 'package:festivalapp/screens/userAuthPage/register_agree_page.dart';
 import 'package:festivalapp/screens/userAuthPage/register_form_page.dart';
 import 'package:flutter/material.dart';
@@ -29,14 +30,15 @@ class MyApp extends StatelessWidget {
           ),
         fontFamily: 'Noto Sans KR',
       ),
-      initialRoute: '/map',
+      initialRoute: '/additional',
       routes:{
         '/login': (context) => LoginPage(),
         '/register_agree': (context) => RegisterAgreePage(),
         //'/register_form': (context) => RegisterFormPage(),
         //'register_additional': (context) => RegisterFormPage(isAdditional: true),
         '/main': (context) => MainPage(),
-        '/map' : (context) => PostcodePage(onAddressSelected: (String fullAddress) {  },),
+        '/map' : (context) => PostcodePage(),
+        '/additional' : (context) => RegisterAdditionalPage(),
       }
       // home: PageIndexer(
       //   pages: const [

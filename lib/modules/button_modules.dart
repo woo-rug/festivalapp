@@ -116,14 +116,16 @@ class GradientButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
         ),
-        child: Ink(
+        child: Container(
+          height: height,
+          width: width,
           decoration: BoxDecoration(
             gradient: isBlue ? 
             LinearGradient(
@@ -132,17 +134,16 @@ class GradientButton extends StatelessWidget {
               end: Alignment.topLeft,
             ) :
             LinearGradient(
-              colors: [Color.fromARGB(255, 180, 180, 180), Color.fromARGB(255, 141, 141, 141)],
+              colors: [Color.fromARGB(255, 230, 230, 230), Color.fromARGB(255, 200, 200, 200)],
               begin: Alignment.bottomRight,
               end: Alignment.topLeft,
             ),
             borderRadius: BorderRadius.circular(25),
             boxShadow: const [BoxShadow(
-              color: Colors.black45,
+              color: Colors.black26,
               blurRadius: 3,
-              offset: Offset(2, 2),
-            ),
-        ]
+              offset: Offset(1, 1),
+            ),]
           ),
           child: Container(
             alignment: Alignment.center,
@@ -187,15 +188,15 @@ class FloatingButton extends StatelessWidget {
             end: Alignment.topLeft,
           ) :
           LinearGradient(
-            colors: [Color.fromARGB(255, 180, 180, 180), Color.fromARGB(255, 141, 141, 141)],
+            colors: [Color.fromARGB(255, 230, 230, 230), Color.fromARGB(255, 200, 200, 200)],
             begin: Alignment.bottomRight,
             end: Alignment.topLeft,
           ),
         borderRadius: BorderRadius.all(Radius.circular(25)),
         boxShadow: const [BoxShadow(
-          color: Colors.black45,
-          blurRadius: 3,
-          offset: Offset(2, 2),
+          color: Colors.black26,
+              blurRadius: 3,
+              offset: Offset(1, 1),
         )]
       ),
       child: Stack(

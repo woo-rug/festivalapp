@@ -1,50 +1,72 @@
-import 'dart:convert';
+import 'package:daum_postcode_search/widget.dart';
+import 'package:festivalapp/modules/base_layouts.dart';
 import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
-class PostcodePage extends StatelessWidget {
-  final Function(String fullAddress) onAddressSelected;
+class PostcodePage extends StatefulWidget {
+  @override
+  _PostcodePageState createState() => _PostcodePageState();
+}
 
-  const PostcodePage({super.key, required this.onAddressSelected});
+class _PostcodePageState extends State<PostcodePage> {
+  bool _isError = false;
+  String? errorMessage;
 
   @override
   Widget build(BuildContext context) {
-    final controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadHtmlString('''
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-        </head>
-        <body>
-          <div id="layer" style="width:100%;height:100%;"></div>
-          <script>
-            new daum.Postcode({
-              oncomplete: function(data) {
-                var fullAddr = data.address;
-                window.flutter_inappwebview.callHandler('onSelect', fullAddr);
-              }
-            }).open();
-          </script>
-        </body>
-        </html>
-      ''');
+    DaumPostcodeSearch daumPostcodeSearch = DaumPostcodeSearch(
+      
+      onConsoleMessage: (_, message) => print(message),
+      onReceivedError: (controller, request, error) => setState(
+        () {
+          _isError = true;
+          errorMessage = error.description;
+        },
+      ),
+    );
 
-    return Scaffold(
-      appBar: AppBar(title: const Text("주소 검색")),
-      body: WebViewWidget(
-        controller: controller
-          ..addJavaScriptChannel(
-            'flutter_inappwebview',
-            onMessageReceived: (msg) {
-              onAddressSelected(msg.message);
-              Navigator.pop(context);
-            },
-          ),
+    return FlatScreen(
+      appBar: const Text(
+        "주소 검색",
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+      ),
+      body: Container(
+        child: Column(
+          children: [
+            SizedBox(height:16),
+            Expanded(
+              child: daumPostcodeSearch,
+            ),
+            if (_isError)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      errorMessage ?? "알 수 없는 오류가 발생했습니다.",
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      child: const Text("다시 시도"),
+                      onPressed: () {
+                        daumPostcodeSearch.controller?.reload();
+                        setState(() {
+                          _isError = false;
+                          errorMessage = null;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 }
-
