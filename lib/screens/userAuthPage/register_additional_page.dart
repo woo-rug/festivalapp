@@ -1,5 +1,5 @@
-import 'base_layouts.dart';
-import 'button_modules.dart';
+import '../../modules/base_layouts.dart';
+import '../../modules/button_modules.dart';
 import 'package:flutter/material.dart';
 
 class ExampleFlat extends StatelessWidget {
@@ -44,6 +44,7 @@ class ExampleFlat extends StatelessWidget {
 
           GradientButton(//각 페이지 위젯 번호 부여하고 수정
             text: "다음 페이지로",
+            isBlue: true,
             onPressed: () {
               Navigator.pop(context); // 버튼 사용 예제, 이전 페이지로 이동
             },

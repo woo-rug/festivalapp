@@ -1,11 +1,18 @@
-import 'package:festivalapp/login_page.dart';
-import 'package:festivalapp/main_page.dart';
-import 'package:festivalapp/register_agree_page.dart';
-import 'package:festivalapp/register_form_page.dart';
+import 'package:festivalapp/modules/postcode_page.dart';
+import 'package:festivalapp/screens/userAuthPage/login_page.dart';
+import 'package:festivalapp/screens/main_page.dart';
+import 'package:festivalapp/screens/userAuthPage/register_agree_page.dart';
+import 'package:festivalapp/screens/userAuthPage/register_form_page.dart';
 import 'package:flutter/material.dart';
-import 'page_indexer.dart';
+import 'package:flutter/services.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
+import 'modules/page_indexer.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized(); // 웹뷰 초기화
+WebViewPlatform.instance = AndroidWebViewPlatform();
+
   runApp(const MyApp());
 }
 
@@ -22,16 +29,16 @@ class MyApp extends StatelessWidget {
           ),
         fontFamily: 'Noto Sans KR',
       ),
-      initialRoute: '/login',
+      initialRoute: '/map',
       routes:{
         '/login': (context) => LoginPage(),
         '/register_agree': (context) => RegisterAgreePage(),
         //'/register_form': (context) => RegisterFormPage(),
         //'register_additional': (context) => RegisterFormPage(isAdditional: true),
         '/main': (context) => MainPage(),
+        '/map' : (context) => PostcodePage(onAddressSelected: (String fullAddress) {  },),
       }
-      //home: LoginPage(),
-      // PageIndexer(
+      // home: PageIndexer(
       //   pages: const [
       //     MainPage(),
       //     Center(child: Text('탐색 페이지')),

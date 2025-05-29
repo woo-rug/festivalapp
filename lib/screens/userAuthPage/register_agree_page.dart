@@ -1,112 +1,75 @@
-import 'base_layouts.dart';
-import 'button_modules.dart';
+import 'package:festivalapp/screens/userAuthPage/register_form_page.dart';
+
+import '../../modules/base_layouts.dart';
+import '../../modules/button_modules.dart';
 import 'package:flutter/material.dart';
 
-class RegisterAgreePage extends StatelessWidget {
+class RegisterAgreePage extends StatefulWidget {
   const RegisterAgreePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return FlatScreen( // base_layouts.dart에서 정의된 FlatScreen 위젯 사용
-      appBarHeight: 80, // 앱바 높이, 따로 설정할 필요 없다면 삭제하시면 됩니다!
-      appBar : AppBar(
-        iconTheme: IconThemeData(
-          color: Colors.white, // 앱바의 아이콘 색상, 변경 안하셔도 됩니다.
-        ),
-        title: Text(
-          "회원가입", // 여기 부분만 페이지에 맞게 수정하시면 됩니다!
-          style: TextStyle( // 굳이 건드릴 필요 없을 것 같습니다!
-            fontSize: 18, // 앱바의 글자 크기
-            fontWeight: FontWeight.w700, // 앱바의 글자 두께
-            color: Colors.white, // 앱바의 글자 색상
-          ),
-        ),
-        centerTitle: true, // 앱바 글자 중앙 정렬
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        shadowColor: Colors.transparent,
-      ),
-      body: ListView(
-        children: [
-          //필요하신 위젯을 여기에 추가하시면 됩니다! ListView 아니어도 괜찮고 편하신 모듈로 사용하시면 되는데,
-          // ListView가 스크롤이 가능해서 이걸 중심으로 사용하시는 것을 추천드리긴 합니다.
-
-          SizedBox(height: 16), // 위젯 사이 간격 조정, 윗부분에 간격 두는 용도
-
-          //const Padding(padding: EdgeInsets.symmetric(horizontal: 16.0),child: SelectableTabRow(),), //한 라인 두 버튼 위젯
-          //const ScrollableTextList(),//그냥 테스트용 의미없음
-          const TermsAgreementSection(),//약관 동의 화면 위젯
-          //SignUpFormContent(), //정보 입력 화면 위젯
-          //AdditionalInfoSection(userName: "홍길동"),//추가 정보 입력 화면 위젯
-          //IdResultBox(userName: "홍길동", userId: "abc123",),//투명 둥근 네모 박스 위젯
-
-          SizedBox(height: 16), // 위젯 사이 간격 조정, 윗부분에 간격 두는 용도
-
-          GradientButton(//각 페이지 위젯 번호 부여하고 수정
-            text: "다음 페이지로",
-            onPressed: () {
-              Navigator.pop(context); // 버튼 사용 예제, 이전 페이지로 이동
-            },
-          )
-        ],
-      ),
-    );
-  }
+  State<RegisterAgreePage> createState() => _RegisterAgreePageState();
 }
 
-//약관동의 위젯
-class TermsAgreementSection extends StatelessWidget {
-  const TermsAgreementSection({super.key});
+class _RegisterAgreePageState extends State<RegisterAgreePage> {
+  bool isTermsAgreed = false; // 필수 약관 동의 여부
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
-          child: Text(
-            "약관 동의",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
+    return FlatScreen(
+      appBar: const Text(
+        "회원가입",
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+      ),
+      body: ListView(
+        children: [
+          const SizedBox(height: 16),
+          TermsItemWidget(
+            title: "App 이용 약관",
+            content: termsAppContent,
+            isRequired: true,
+            isChecked: isTermsAgreed,
+            onChanged: (val) {
+              setState(() {
+                isTermsAgreed = val;
+              });
+            },
           ),
-        ),
-        TermsItemWidget(
-          title: "App 이용 약관",
-          content: termsAppContent,
-          isRequired: true,
-        ),
-        TermsItemWidget(
-          title: "위치정보 사용 약관",
-          content: termsAppContent,
-          isRequired: false,
-        ),
-      ],
+        ],
+      ),
+      floatingActionButton: FloatingButton(
+        text: "다음 페이지로",
+        onPressed: isTermsAgreed ? () {
+                Navigator.push(context, MaterialPageRoute(builder : (context) => RegisterFormPage()));
+              }
+            : null, // 비활성화
+        isBlue: isTermsAgreed ? true : false,
+      ),
     );
   }
 }
 
+
 //약관 박스 위젯
-class TermsItemWidget extends StatefulWidget {
+class TermsItemWidget extends StatelessWidget {
   final String title;
   final String content;
   final bool isRequired;
+  final bool isChecked;
+  final ValueChanged<bool> onChanged;
 
   const TermsItemWidget({
     super.key,
     required this.title,
     required this.content,
     this.isRequired = false,
+    required this.isChecked,
+    required this.onChanged,
   });
-
-  @override
-  State<TermsItemWidget> createState() => _TermsItemWidgetState();
-}
-
-class _TermsItemWidgetState extends State<TermsItemWidget> {
-  bool isChecked = false;
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +78,7 @@ class _TermsItemWidgetState extends State<TermsItemWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(widget.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
           const SizedBox(height: 8),
           Container(
             height: 160,
@@ -125,24 +88,19 @@ class _TermsItemWidgetState extends State<TermsItemWidget> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: SingleChildScrollView(
-              child: Text(
-                widget.content,
-                style: TextStyle(fontSize: 10),
-              ),
+              child: Text(content, style: const TextStyle(fontSize: 10)),
             ),
           ),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
             value: isChecked,
-            onChanged: (val) {
-              setState(() {
-                isChecked = val ?? false;
-              });
-            },
+            onChanged: (val) => onChanged(val ?? false),
             title: Text(
-              widget.isRequired ? "(필수) ${widget.title}에 동의합니다." : "(선택) ${widget.title}에 동의합니다.",
-              style: TextStyle(fontSize: 10),
-              ),
+              isRequired
+                  ? "(필수) $title에 동의합니다."
+                  : "(선택) $title에 동의합니다.",
+              style: const TextStyle(fontSize: 10),
+            ),
             controlAffinity: ListTileControlAffinity.trailing,
           ),
         ],
@@ -150,6 +108,7 @@ class _TermsItemWidgetState extends State<TermsItemWidget> {
     );
   }
 }
+
 
 //약관 내용 텍스트 (임시)
 const String termsAppContent = '''

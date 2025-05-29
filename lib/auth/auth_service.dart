@@ -5,15 +5,28 @@ import 'secure_storage_service.dart';
 
 class AuthService {
   final _storage = SecureStorageService();
-  final _baseUrl = 'https://server.com'; // 실제 서버 주소로 변경해줘
+  final _baseUrl = 'http://182.222.119.214:8081';
 
   // 로그인
   Future<bool> login(String username, String password, bool keepLogin) async {
+    //서버 로그인 과정
     final response = await http.post(
       Uri.parse('$_baseUrl/api/members/sign-in'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'username': username, 'password': password}),
     );
+
+    // 예시 과정
+    // final response = (username == 'admin' && password == 'admin123');
+    // if (response) {
+    //   // 로그인 성공
+    //   await _storage.saveToken('accessToken', 'accessToken123');
+    //   await _storage.saveToken('refreshToken', 'refreshToken123');
+    //   await _storage.saveToken('keepLogin', keepLogin.toString());
+    //   return true;
+    // } else {
+    //   return false;
+    // }
 
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
@@ -87,7 +100,7 @@ class AuthService {
   Future<void> logout(BuildContext context) async {
     await _storage.deleteAll();
     if (context.mounted) {
-      Navigator.pushReplacementNamed(context, '/sign-in');
+      Navigator.pushReplacementNamed(context, '/login');
     }
   }
 

@@ -1,6 +1,8 @@
-import 'package:festivalapp/base_layouts.dart';
+import 'package:festivalapp/modules/base_layouts.dart';
+import 'package:festivalapp/modules/button_modules.dart';
+import 'package:festivalapp/screens/userAuthPage/register_agree_page.dart';
 import 'package:flutter/material.dart';
-import 'auth_service.dart';
+import '../../auth/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -112,30 +114,27 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _login,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF487FFF),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('로그인', style: TextStyle(fontSize: 16, color: Colors.white)),
+            GradientButton(
+              onPressed: () {},
+              isBlue: true,
+              text: '로그인',
             ),
             if (_error != null) ...[
               const SizedBox(height: 12),
               Text(_error!, style: const TextStyle(color: Colors.red)),
             ],
             const SizedBox(height: 12),
-            OutlinedButton(
+            GradientButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/signup/terms');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                  builder: (BuildContext context) => const RegisterAgreePage()
+                  ),
+                );
               },
-              style: OutlinedButton.styleFrom(
-                backgroundColor: Colors.grey,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: const Text('회원가입', style: TextStyle(fontSize: 16, color: Colors.black)),
+              isBlue: false,
+              text: '회원가입',
             ),
             const SizedBox(height: 16),
             TextButton(
@@ -144,7 +143,7 @@ class _LoginPageState extends State<LoginPage> {
               },
               child: const Text(
                 '아이디/비밀번호 찾기',
-                style: TextStyle(color: Color(0xFF487FFF)),
+                style: TextStyle(color: Color(0xFF1976D2), fontWeight: FontWeight.w500,),
               ),
             ),
           ],

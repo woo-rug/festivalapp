@@ -1,7 +1,7 @@
-import 'package:festivalapp/base_layouts.dart';
-import 'package:festivalapp/button_modules.dart';
-import 'package:festivalapp/slider_modules.dart';
-import 'package:festivalapp/title_modules.dart';
+import 'package:festivalapp/modules/base_layouts.dart';
+import 'package:festivalapp/modules/button_modules.dart';
+import 'package:festivalapp/modules/slider_modules.dart';
+import 'package:festivalapp/modules/title_modules.dart';
 import 'package:flutter/material.dart';
 
 class MainPage extends StatelessWidget {

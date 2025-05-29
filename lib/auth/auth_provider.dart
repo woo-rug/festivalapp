@@ -3,14 +3,12 @@ import 'auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
-
   String? _accessToken;
   String? _refreshToken;
+  bool _keepLogin = false;
 
+  bool get keepLogin => keepLogin;
   String? get accessToken => _accessToken;
-  String? get refreshToken => _refreshToken;
-
-  bool get isLoggedIn => _accessToken != null;
 
   Future<void> loadTokensFromStorage() async {
     _accessToken = await _authService.getAccessToken();
@@ -23,6 +21,7 @@ class AuthProvider extends ChangeNotifier {
     if (result) {
       _accessToken = await _authService.getAccessToken();
       _refreshToken = await _authService.getRefreshToken();
+      _keepLogin = await _authService.shouldKeepLogin();
       notifyListeners();
     }
     return result;
@@ -32,18 +31,21 @@ class AuthProvider extends ChangeNotifier {
     await _authService.logout(context);
     _accessToken = null;
     _refreshToken = null;
+    _keepLogin = false;
     notifyListeners();
   }
 
+  Future<bool> shouldKeepLogin() async {
+    return await _authService.shouldKeepLogin();
+  }
+
   Future<String?> getValidAccessToken(BuildContext context) async {
-    // 유효성 검사 (예: 401 처리 포함)
     final isValid = await _authService.validateToken(context);
     if (isValid) {
       _accessToken = await _authService.getAccessToken();
       notifyListeners();
       return _accessToken;
-    } else {
-      return null;
     }
+    return null;
   }
 }
