@@ -48,4 +48,13 @@ class AuthProvider extends ChangeNotifier {
     }
     return null;
   }
+
+  Future<String?> refreshToken(BuildContext context) async {
+    final newToken = await _authService.refreshToken(context);
+    if (newToken != null) {
+      _accessToken = newToken;
+      notifyListeners();
+    }
+    return newToken;
+  }
 }

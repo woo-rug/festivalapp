@@ -1,3 +1,4 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:festivalapp/modules/base_layouts.dart';
 import 'package:festivalapp/modules/button_modules.dart';
 import 'package:festivalapp/screens/userAuthPage/register_agree_page.dart';
@@ -26,19 +27,24 @@ class _LoginPageState extends State<LoginPage> {
       _error = null;
     });
 
-    final success = await _authService.login(
-      _usernameController.text,
-      _passwordController.text,
-      _keepLogin,
-    );
+    if (_usernameController.text == 'admin' && _passwordController.text == 'admin') {
+      final storage = FlutterSecureStorage();
+      await storage.write(key: 'accessToken', value: 'mock_access_token');
+      await storage.write(key: 'refreshToken', value: 'mock_refresh_token');
+      if (_keepLogin) {
+        await storage.write(key: 'keepLogin', value: 'true');
+      } else {
+        await storage.write(key: 'keepLogin', value: 'false');
+      }
 
-    setState(() {
-      _isLoading = false;
-      _error = success ? null : "로그인 실패";
-    });
-
-    if (success && mounted) {
-      Navigator.pushReplacementNamed(context, '/home');
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/main');
+      }
+    } else {
+      setState(() {
+        _isLoading = false;
+        _error = "로그인 실패";
+      });
     }
   }
 
@@ -115,7 +121,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             const SizedBox(height: 16),
             GradientButton(
-              onPressed: () {},
+              onPressed: _login,
               isBlue: true,
               text: '로그인',
             ),
@@ -145,6 +151,23 @@ class _LoginPageState extends State<LoginPage> {
                 '아이디/비밀번호 찾기',
                 style: TextStyle(color: Color(0xFF1976D2), fontWeight: FontWeight.w500,),
               ),
+            ),
+            const SizedBox(height: 16),
+            FutureBuilder<Map<String, String>>(
+              future: const FlutterSecureStorage().readAll(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const SizedBox.shrink();
+                final data = snapshot.data!;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: data.entries.map((entry) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Text('${entry.key}: ${entry.value}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    );
+                  }).toList(),
+                );
+              },
             ),
           ],
         ),

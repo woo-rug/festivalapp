@@ -19,6 +19,7 @@ dependencies:
   webview_flutter: ^4.13.0
   webview_flutter_android: ^4.7.0
   daum_postcode_search: ^0.0.4
+  animations: ^2.0.11
 
 dev_dependencies:
   flutter_test:

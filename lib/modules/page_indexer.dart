@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:animations/animations.dart';
 
 class PageIndexer extends StatefulWidget {
   final List<Widget> pages;
@@ -13,11 +14,20 @@ class PageIndexer extends StatefulWidget {
 
 class _PageIndexerState extends State<PageIndexer> {
   int _selectedIndex = 0;
+  late List<Widget?> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = List.filled(widget.pages.length, null);
+    _pages[0] = widget.pages[0];
+  }
 
   void _onTap(int index) {
     if (index < widget.pages.length) {
       setState(() {
         _selectedIndex = index;
+        _pages[index] ??= widget.pages[index];
       });
     }
   }
@@ -26,19 +36,21 @@ class _PageIndexerState extends State<PageIndexer> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: Colors.white,
+      backgroundColor: Color(0xFF1976D2),
       body: Stack(
         children: [
           /// 페이지 본문
           IndexedStack(
             index: _selectedIndex,
-            children: widget.pages,
+            children: List.generate(widget.pages.length, (index) {
+              return _pages[index] ?? const SizedBox.shrink();
+            }),
           ),
 
           /// 플로팅 네비게이션 바
           Positioned(
-            left: 16,
-            right: 16,
+            left: 32,
+            right: 32,
             bottom: Platform.isIOS ? MediaQuery.of(context).padding.bottom : 16,
             child: MediaQuery.removePadding(
               context: context,
@@ -84,10 +96,6 @@ class _PageIndexerState extends State<PageIndexer> {
                           icon: Icon(CupertinoIcons.home),
                           label: '메인',
                         ),
-                        const BottomNavigationBarItem(
-                          icon: Icon(CupertinoIcons.search),
-                          label: '탐색',
-                        ),
                         BottomNavigationBarItem(
                           icon: AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
@@ -97,7 +105,7 @@ class _PageIndexerState extends State<PageIndexer> {
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              gradient: _selectedIndex == 2
+                              gradient: _selectedIndex == 1
                                   ? const LinearGradient(
                                       colors: [Color(0xFF64B5F6), Color(0xFF1976D2)],
                                       begin: Alignment.topLeft,
@@ -113,7 +121,7 @@ class _PageIndexerState extends State<PageIndexer> {
                                     ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: _selectedIndex == 2
+                                  color: _selectedIndex == 1
                                       ? Colors.blue.shade200
                                       : Colors.grey.shade500,
                                   blurRadius: 8,
@@ -123,15 +131,11 @@ class _PageIndexerState extends State<PageIndexer> {
                             ),
                             child: Icon(
                               CupertinoIcons.sparkles,
-                              color: _selectedIndex == 2 ? Colors.white : Colors.grey,
+                              color: _selectedIndex == 1 ? Colors.white : Colors.grey,
                               size: 24,
                             ),
                           ),
                           label: '',
-                        ),
-                        const BottomNavigationBarItem(
-                          icon: Icon(CupertinoIcons.heart),
-                          label: '찜',
                         ),
                         const BottomNavigationBarItem(
                           icon: Icon(CupertinoIcons.person),

@@ -108,4 +108,35 @@ class AuthService {
   Future<String?> getAccessToken() async => await _storage.readToken('accessToken');
   Future<String?> getRefreshToken() async => await _storage.readToken('refreshToken');
   Future<bool> shouldKeepLogin() async => (await _storage.readToken('keepLogin')) == 'true';
+
+  // 무조건 토큰 재발급 함수
+  Future<String?> refreshToken(BuildContext context) async {
+    final accessToken = await getAccessToken();
+    final refreshToken = await getRefreshToken();
+
+    if (accessToken == null || refreshToken == null) return null;
+
+    final response = await http.post(
+      Uri.parse('$_baseUrl/api/members/reissue'),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'accessToken': accessToken,
+        'refreshToken': refreshToken,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final body = jsonDecode(response.body);
+      await _storage.saveToken('accessToken', body['accessToken']);
+      if (body['refreshToken'] != null) {
+        await _storage.saveToken('refreshToken', body['refreshToken']);
+      }
+      return body['accessToken'];
+    }
+
+    return null;
+  }
 }
