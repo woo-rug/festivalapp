@@ -50,11 +50,11 @@ class _RegisterAdditionalPageState extends State<RegisterAdditionalPage> {
             userName: "홍길동",
             onAnswerComplete: (value) => setState(() => isComplete = value),
           ),
-          SizedBox(height: 16), // 위젯 사이 간격 조정, 윗부분에 간격 두는 용도
+          SizedBox(height: 16), // 위젯 사이 간격 조정, 윗부분에 간격 두는 용도 
         ],
       ),
       floatingActionButton: FloatingButton(
-        text: "다음 페이지로",
+        text: "다음 페이지로", // Keyword1, Keyword2, Keyword3로 키값 사용, /api/members/keywords로 연동
         onPressed: isComplete ? 
         // () async {
         //       final selectedIndexes = _sectionKey.currentState?.selectedIndexes;
@@ -112,16 +112,16 @@ class _AdditionalInfoSectionState extends State<AdditionalInfoSection> {
 
   final List<Map<String, dynamic>> questions = [
     {
-      "text": "1. 사용자가 가장 선호하는 문화활동을 선택해주세요.",
-      "options": ["축제", "콘서트", "뮤지컬",],
+      "text": "1. 어떤 공간에서 여가를 즐기는 걸 더 선호하시나요?",
+      "options": ["야외", "실내"],
     },
     {
-      "text": "2. 가장 자주 참여하는 문화활동을 선택해주세요.",
-      "options": ["야구 경기", "농구 경기", "배구 경기"],
+      "text": "2. {}님은 여가 시간에 어떤 스타일로 활동하길 원하시나요?",
+      "options": ["감성적", "활동적", "정적"],
     },
     {
-      "text": "3. 앞으로 참여해보고 싶은 문화활동을 선택해주세요.",
-      "options": ["시사회", "강연", "체험 행사"],
+      "text": "3. {}님이 좋아하는 분위기나 요소를 하나만 골라주세요.",
+      "options": ["자연", "음악", "예술", "조용함", "열정적", "운동", "쇼핑", "북적임", "독서"],
     }
   ];
 

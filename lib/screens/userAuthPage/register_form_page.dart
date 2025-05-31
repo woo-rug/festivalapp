@@ -22,6 +22,7 @@ class _RegisterFormPageState extends State<RegisterFormPage> {
   final pwController = TextEditingController();
   final pwConfirmController = TextEditingController();
   final nameController = TextEditingController();
+  final ageController = TextEditingController();
   final emailController = TextEditingController();
   final emailCodeController = TextEditingController();
   final nicknameController = TextEditingController();
@@ -54,6 +55,7 @@ class _RegisterFormPageState extends State<RegisterFormPage> {
             pwController: pwController,
             pwConfirmController: pwConfirmController,
             nameController: nameController,
+            ageController: ageController,
             emailController: emailController,
             emailCodeController: emailCodeController,
             nicknameController: nicknameController,
@@ -68,33 +70,48 @@ class _RegisterFormPageState extends State<RegisterFormPage> {
       ),
       floatingActionButton: FloatingButton(
         text: "다음 페이지로",
-        onPressed: isFormFilled ? 
-            // () async { // json 형식에 맞게 key값 수정 요망
-            //     final response = await http.post(
-            //       Uri.parse('https://yourserver.com/register'),
-            //       headers: {'Content-Type': 'application/json'},
-            //       body: jsonEncode({
-            //         'id': idController.text,
-            //         'password': pwController.text,
-            //         'name': nameController.text,
-            //         'email': emailController.text,
-            //         'nickname': nicknameController.text,
-            //         'gender': selectedGender,
-            //         'address': locationController.text,
-            //       }),
-            //     );
+        onPressed: isFormFilled
+            ? () async {
+                final response = await http.post(
+                  Uri.parse('http://182.222.119.214:8081/api/members/join'),
+                  headers: {'Content-Type': 'application/json'},
+                  body: jsonEncode({
+                    'username': idController.text,
+                    'password': pwController.text,
+                    'name': nameController.text,
+                    'email': emailController.text,
+                    'nickname': nicknameController.text,
+                    'gender': genderToEnum(selectedGender),
+                    'location': locationController.text,
+                    'age': ageController.text,
+                    'authcode' : emailCodeController.text,
+                  }),
+                );
 
-            //     if (response.statusCode == 200) {
-            //       Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterAdditionalPage()));
-            //     } else {
-            //       Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterResult()));
-            //     }
-            //   }
-            () {Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterAdditionalPage()));} // 일단 서버로 전송 안하고 패스로 구함
+                if (response.statusCode == 200) {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterAdditionalPage()));
+                } else {
+                  print('응답 코드: ${response.statusCode}');
+                  print('응답 바디: ${response.body}');
+                  print(idController.text + ", " + pwController.text + ", " + nameController.text + ", " + emailController.text + ", " + nicknameController.text + ", " + genderToEnum(selectedGender) + ", " + locationController.text + ", " + ageController.text + ", " + emailCodeController.text + ", ");
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterResult(success: false,)));
+                }
+              }
             : null,
         isBlue: isFormFilled,
       ),
     );
+  }
+
+  String genderToEnum(String? gender) {
+    switch (gender) {
+      case '남성':
+        return 'MALE';
+      case '여성':
+        return 'FEMALE';
+      default:
+        return 'UNKNOWN';
+    }
   }
 }
 
@@ -170,6 +187,7 @@ class SignUpFormContent extends StatefulWidget {
   final TextEditingController pwController;
   final TextEditingController pwConfirmController;
   final TextEditingController nameController;
+  final TextEditingController ageController;
   final TextEditingController emailController;
   final TextEditingController emailCodeController;
   final TextEditingController nicknameController;
@@ -184,6 +202,7 @@ class SignUpFormContent extends StatefulWidget {
     required this.pwController,
     required this.pwConfirmController,
     required this.nameController,
+    required this.ageController,
     required this.emailController,
     required this.emailCodeController,
     required this.nicknameController,
@@ -204,6 +223,14 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
   bool isIdAvailable = false;
   bool isNicknameAvailable = false;
   bool isEmailValid = true;
+  bool isAgeValid = true;
+  void _validateAge(String value) {
+    final age = int.tryParse(value);
+    setState(() {
+      isAgeValid = age != null && age >= 1 && age <= 120;
+    });
+    _checkAllFilled();
+  }
 
   @override
   void initState() {
@@ -239,6 +266,7 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
         widget.pwConfirmController.text.isNotEmpty &&
         isPasswordMatch == true &&
         widget.nameController.text.isNotEmpty &&
+        widget.ageController.text.isNotEmpty &&
         widget.emailController.text.isNotEmpty &&
         widget.emailCodeController.text.isNotEmpty &&
         widget.locationController.text.isNotEmpty &&
@@ -290,16 +318,21 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
   }
 
   Future<void> _sendEmailVerification() async {
-    // final response = await http.post(
-    //   Uri.parse('https://yourserver.com/send-email'),
-    //   headers: {'Content-Type': 'application/json'},
-    //   body: jsonEncode({'email': widget.emailController.text}),
-    // );
-    // if (response.statusCode == 200) {
-    //   // success handling
-    // } else {
-    //   // error handling
-    // }
+    final response = await http.post(
+      Uri.parse('http://182.222.119.214:8081/api/members/join/send-email'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': widget.emailController.text}),
+    );
+    if (response.statusCode == 200) {
+      // success handling
+      print("이메일 보내기 위한 서버 접속 성공");
+    } else {
+      // error handling
+      print(widget.emailController.text + "로 이메일 보내기");
+      print('응답 코드: ${response.statusCode}');
+      print('응답 바디: ${response.body}');
+      print("이메일 서버 접속 실패");
+    }
   }
 
   void _validateEmailFormat(String email) {
@@ -367,6 +400,14 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
 
           const SizedBox(height: 16),
           CommonTextField(label: "이름", controller: widget.nameController, onChanged: (_) => _checkAllFilled()),
+          const SizedBox(height: 16),
+          CommonTextField(
+            label: "나이",
+            controller: widget.ageController,
+            onChanged: _validateAge,
+          ),
+          if (!isAgeValid)
+            const Text("❌ 올바른 나이값을 입력하세요.", style: TextStyle(color: Colors.red, fontSize: 13)),
           const SizedBox(height: 16),
 
           Row(

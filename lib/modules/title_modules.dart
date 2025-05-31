@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class TitleModules {
   static Widget title(String text, {double fontSize = 24, Color? color}) {
     return Container(
-      padding: const EdgeInsets.only(top: 25, bottom: 15, left:30),
+      padding: const EdgeInsets.only(top: 24, bottom: 16, left:20),
       child: Text(
         text,
         style: TextStyle(

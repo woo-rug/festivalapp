@@ -146,7 +146,6 @@ class FlatScreen extends StatelessWidget {
     body: Stack(
       children: [
         const Background(),
-
         Padding(
           padding: EdgeInsets.only(
             top: appBarHeight + MediaQuery.of(context).padding.top,

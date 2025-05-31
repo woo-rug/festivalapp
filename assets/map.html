@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>지도</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+      border-radius: 16%;
+    }
+    #log {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 6px 10px;
+      font-size: 14px;
+      z-index: 100;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=ad1b22f1e8301e78ef7fb061950a785c&libraries=services"></script>
+  <script>
+    function loadAddress(lat, lng) {
+      const mapContainer = document.getElementById('map');
+      const mapOption = {
+        center: new kakao.maps.LatLng(lat, lng),
+        level: 4
+      };
+      const map = new kakao.maps.Map(mapContainer, mapOption);
+
+      const coords = new kakao.maps.LatLng(lat, lng);
+      new kakao.maps.Marker({
+        map: map,
+        position: coords
+      });
+      map.setCenter(coords);
+    }
+
+    window.loadAddress = loadAddress;
+  </script>
+</body>
+</html>

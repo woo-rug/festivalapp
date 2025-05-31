@@ -8,25 +8,13 @@ class MainPage extends StatelessWidget { // MainPage 이름 변경해서 사용�
   Widget build(BuildContext context) {
     return FlatScreen(
       appBarHeight: 80, // 앱 아이콘 크기에 맞춰서 변경해야 할 부분
-      appBar : AppBar(
-        title: Container( // 앱 아이콘 삽입 부분, 가운데 맞춤 하려면 Center 위젯 사용
-          height:60,
-          width:60,
-          color:Colors.grey,
-          child: Center(
-            child: Text(
-              "아이콘",
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w100,
-                color: Colors.black,
-              ),
-            ),
-          ),
+      appBar : const Text(
+        "회원가입",
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        shadowColor: Colors.transparent,
       ),
       body: ListView(
         children: [

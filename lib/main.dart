@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:festivalapp/auth/auth_provider.dart';
 import 'package:festivalapp/screens/indexPage/profile_page.dart';
 import 'package:festivalapp/screens/indexPage/search_page.dart';
@@ -16,8 +17,7 @@ import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'modules/page_indexer.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized(); // 웹뷰 초기화
-  WebViewPlatform.instance = AndroidWebViewPlatform();
+  WidgetsFlutterBinding.ensureInitialized();
 
   runApp(
     MultiProvider(
@@ -40,7 +40,7 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(
             seedColor: Color(0xFF1976D2),
           ),
-        fontFamily: 'Noto Sans KR',
+        fontFamily: 'NotoSansKR',
       ),
       initialRoute: '/',
       routes:{
