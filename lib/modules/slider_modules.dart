@@ -1,33 +1,8 @@
-import 'package:carousel_slider/carousel_slider.dart';
+import 'dart:async';
+import 'package:festivalapp/screens/contentsPage/contents_detail_page.dart';
 import 'package:flutter/material.dart';
 
-// 캐러셀 슬라이더 -> 메인 화면 사진 슬라이더
-class CarouselSliderModule extends StatelessWidget {
-  final List<Widget> items;
-  final double aspectRatio;
-  final bool autoPlay;
 
-  const CarouselSliderModule({
-    super.key,
-    required this.items,
-    this.aspectRatio = 16 / 9,
-    this.autoPlay = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return CarouselSlider(
-      items: items,
-      options: CarouselOptions(
-        enlargeCenterPage: true,
-        aspectRatio: aspectRatio,
-        autoPlay: autoPlay,
-        enableInfiniteScroll: true,
-        viewportFraction: 0.8,
-      ),
-    );
-  }
-}
 
 
 // 페이지뷰 슬라이더 -> AI 추천
@@ -94,7 +69,7 @@ class _LeftAlignedSnapSliderState extends State<LeftAlignedSnapSlider> {
     return Column(
       children: [
         SizedBox(
-          height: 240,
+          height: 220,
           child: ListView.builder(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
@@ -112,7 +87,7 @@ class _LeftAlignedSnapSliderState extends State<LeftAlignedSnapSlider> {
             },
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         _buildDotsIndicator(),
       ],
     );
@@ -135,56 +110,61 @@ class RecommandResultButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 160,
-      height: 200,
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        // border:Border.all(color: Colors.black, width: 0.5),
-        // color: Colors.amber,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: SizedBox(
-              height: 150,
-              child: Image.asset(
-                imagePath,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ContentsDetailPage(contentsID: '축제',)),
+        );
+      },
+      child: Container(
+        width: 160,
+        height: 200,
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
                 height: 150,
-                fit: BoxFit.cover,
-              ),
-            )
-          ),
-          Container(
-            alignment: Alignment.centerLeft,
-            padding: EdgeInsets.only(top: 8, left:8, right: 8),
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-              overflow: TextOverflow.ellipsis,
+                child: Image.asset(
+                  imagePath,
+                  height: 150,
+                  fit: BoxFit.cover,
+                ),
+              )
             ),
-          ),
-          Container(
-            alignment: Alignment.centerLeft,
-            padding: EdgeInsets.only(top: 4, left:8, right: 8),
-            child: Text(
-              dateRange,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.black54,
+            Container(
+              alignment: Alignment.centerLeft,
+              padding: EdgeInsets.only(top: 8, left:8, right: 8),
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ],
+            Container(
+              alignment: Alignment.centerLeft,
+              padding: EdgeInsets.only(top: 4, left:8, right: 8),
+              child: Text(
+                dateRange,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.black54,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-

@@ -40,11 +40,15 @@ class _PageIndexerState extends State<PageIndexer> {
       body: Stack(
         children: [
           /// 페이지 본문
-          IndexedStack(
-            index: _selectedIndex,
-            children: List.generate(widget.pages.length, (index) {
-              return _pages[index] ?? const SizedBox.shrink();
-            }),
+          PageTransitionSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (child, primaryAnimation, secondaryAnimation) =>
+              FadeThroughTransition(
+                animation: primaryAnimation,
+                secondaryAnimation: secondaryAnimation,
+                child: child,
+              ),
+            child: _pages[_selectedIndex] ?? const SizedBox.shrink(),
           ),
 
           /// 플로팅 네비게이션 바
