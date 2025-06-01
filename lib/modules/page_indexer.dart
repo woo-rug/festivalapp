@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';
@@ -24,7 +25,7 @@ class _PageIndexerState extends State<PageIndexer> {
   }
 
   void _onTap(int index) {
-    if (index < widget.pages.length) {
+    if (index < widget.pages.length && _selectedIndex != index) {
       setState(() {
         _selectedIndex = index;
         _pages[index] ??= widget.pages[index];
@@ -36,22 +37,17 @@ class _PageIndexerState extends State<PageIndexer> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: Color(0xFF1976D2),
+      backgroundColor: const Color(0xFF1976D2),
       body: Stack(
         children: [
-          /// 페이지 본문
-          PageTransitionSwitcher(
-            duration: const Duration(milliseconds: 300),
-            transitionBuilder: (child, primaryAnimation, secondaryAnimation) =>
-              FadeThroughTransition(
-                animation: primaryAnimation,
-                secondaryAnimation: secondaryAnimation,
-                child: child,
-              ),
-            child: _pages[_selectedIndex] ?? const SizedBox.shrink(),
+          IndexedStack(
+            index: _selectedIndex,
+            children: List.generate(
+              _pages.length,
+              (index) => _pages[index] ?? const SizedBox.shrink(),
+            ),
           ),
-
-          /// 플로팅 네비게이션 바
+          /// 하단 네비게이션 바는 항상 고정
           Positioned(
             left: 32,
             right: 32,

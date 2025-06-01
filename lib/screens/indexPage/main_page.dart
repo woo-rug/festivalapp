@@ -10,153 +10,172 @@ class MainPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FlatScreen(
-      appBarHeight: 100, // 앱 아이콘 크기에 맞춰서 변경해야 할 부분분
-      appBar : Container( // 앱 아이콘 삽입 부분분
-        height:60,
-        width:60,
-        color:Colors.grey,
-        child: Center(
-          child: Text(
-            "아이콘",
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w100,
-              color: Colors.black,
+    return Navigator(
+      onGenerateRoute: (settings) {
+        if (settings.name == '/contents_detail') {
+          final String contentsID = settings.arguments as String;
+          return MaterialPageRoute(
+            builder: (_) => ContentsDetailPage(contentsID: contentsID),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => FlatScreen(
+            appBarHeight: 100,
+            appBar: Container(
+              height: 60,
+              width: 60,
+              color: Colors.grey,
+              child: Center(
+                child: Text(
+                  "아이콘",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w100,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
             ),
+            body: _MainPageBody(),
           ),
-        ),
-      ),
-      body: ListView(
-        children: [
-          Container(height: 24),
-          CardSliderWithStaticDots(
-            height: 250,
-            width: 400,
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    height: 90,
-                    margin: EdgeInsets.only(left: 24, right: 12, top: 16, bottom: 16),
-                    padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      gradient: LinearGradient(
-                        colors: [Color.fromARGB(255, 239, 177, 183), Color.fromARGB(255, 250, 126, 126)],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.favorite, color: Colors.grey[700], size: 24),
-                        SizedBox(height: 8),
-                        Text(
-                          "찜한 행사",
-                          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    height: 90,
-                    margin: EdgeInsets.only(right: 24, left: 12, top: 16, bottom: 16),
-                    padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      gradient: LinearGradient(
-                        colors: [Color(0xFFC8E6C9), Color.fromARGB(255, 147, 227, 151)],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.edit, color: Colors.grey[700], size: 24),
-                        SizedBox(height: 8),
-                        Text(
-                          "내가 쓴 글",
-                          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          TitleModules.title("AI가 추천하는 문화생활"),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(alignment:Alignment.centerLeft, padding: EdgeInsets.fromLTRB(24, 4, 0, 8), child: Text("사용자 기반 추천 문화생활", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),),),
-              LeftAlignedSnapSlider(
-                items: [
-                  RecommandResultButton(
-                    imagePath: 'assets/images/ai_recommend1.jpg',
-                    title: 'AI 추천 문화생활 1',
-                    dateRange: '2025.01.01 ~ 01.10',
-                  ),
-                  RecommandResultButton(
-                    imagePath: 'assets/images/ai_recommend2.jpg',
-                    title: 'AI 추천 문화생활 2',
-                    dateRange: '2025.01.01 ~ 01.10',
-                  ),
-                  RecommandResultButton(
-                    imagePath: 'assets/images/ai_recommend3.jpg',
-                    title: 'AI 추천 문화생활 3',
-                    dateRange: '2025.01.01 ~ 01.10',
-                  ),
-                ],
-              ),
+        );
+      },
+    );
+  }
+}
 
-              Container(alignment:Alignment.centerLeft, padding: EdgeInsets.fromLTRB(24, 36, 0, 8), child: Text("비슷한 사용자 기반 추천 문화생활", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),),),
-              LeftAlignedSnapSlider(
-                items: [
-                  RecommandResultButton(
-                    imagePath: 'assets/images/ai_recommend1.jpg',
-                    title: 'AI 추천 문화생활 1',
-                    dateRange: '2025.01.01 ~ 01.10',
+class _MainPageBody extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      children: [
+        Container(height: 24),
+        CardSliderWithStaticDots(
+          height: 250,
+          width: 400,
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () {},
+                child: Container(
+                  height: 90,
+                  margin: EdgeInsets.only(left: 24, right: 12, top: 16, bottom: 16),
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      colors: [Color.fromARGB(255, 239, 177, 183), Color.fromARGB(255, 250, 126, 126)],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 6,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
                   ),
-                  RecommandResultButton(
-                    imagePath: 'assets/images/ai_recommend2.jpg',
-                    title: 'AI 추천 문화생활 2',
-                    dateRange: '2025.01.01 ~ 01.10',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.favorite, color: Colors.grey[700], size: 24),
+                      SizedBox(height: 8),
+                      Text(
+                        "찜한 행사",
+                        style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
+                      ),
+                    ],
                   ),
-                  RecommandResultButton(
-                    imagePath: 'assets/images/ai_recommend3.jpg',
-                    title: 'AI 추천 문화생활 3',
-                    dateRange: '2025.01.01 ~ 01.10',
-                  ),
-                ],
+                ),
               ),
-            ],
-          ),
-          SizedBox(height:120),
-        ],
-      ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {},
+                child: Container(
+                  height: 90,
+                  margin: EdgeInsets.only(right: 24, left: 12, top: 16, bottom: 16),
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      colors: [Color(0xFFC8E6C9), Color.fromARGB(255, 147, 227, 151)],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 6,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.edit, color: Colors.grey[700], size: 24),
+                      SizedBox(height: 8),
+                      Text(
+                        "내가 쓴 글",
+                        style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        TitleModules.title("AI가 추천하는 문화생활"),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(alignment:Alignment.centerLeft, padding: EdgeInsets.fromLTRB(24, 4, 0, 8), child: Text("사용자 기반 추천 문화생활", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),),),
+            LeftAlignedSnapSlider(
+              items: [
+                RecommandResultButton(
+                  imagePath: 'assets/images/ai_recommend1.jpg',
+                  title: 'AI 추천 문화생활 1',
+                  dateRange: '2025.01.01 ~ 01.10',
+                ),
+                RecommandResultButton(
+                  imagePath: 'assets/images/ai_recommend2.jpg',
+                  title: 'AI 추천 문화생활 2',
+                  dateRange: '2025.01.01 ~ 01.10',
+                ),
+                RecommandResultButton(
+                  imagePath: 'assets/images/ai_recommend3.jpg',
+                  title: 'AI 추천 문화생활 3',
+                  dateRange: '2025.01.01 ~ 01.10',
+                ),
+              ],
+            ),
+
+            Container(alignment:Alignment.centerLeft, padding: EdgeInsets.fromLTRB(24, 36, 0, 8), child: Text("비슷한 사용자 기반 추천 문화생활", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),),),
+            LeftAlignedSnapSlider(
+              items: [
+                RecommandResultButton(
+                  imagePath: 'assets/images/ai_recommend1.jpg',
+                  title: 'AI 추천 문화생활 1',
+                  dateRange: '2025.01.01 ~ 01.10',
+                ),
+                RecommandResultButton(
+                  imagePath: 'assets/images/ai_recommend2.jpg',
+                  title: 'AI 추천 문화생활 2',
+                  dateRange: '2025.01.01 ~ 01.10',
+                ),
+                RecommandResultButton(
+                  imagePath: 'assets/images/ai_recommend3.jpg',
+                  title: 'AI 추천 문화생활 3',
+                  dateRange: '2025.01.01 ~ 01.10',
+                ),
+              ],
+            ),
+          ],
+        ),
+        SizedBox(height:120),
+      ],
     );
   }
 }
@@ -194,7 +213,7 @@ class _CardSliderWithStaticDotsState extends State<CardSliderWithStaticDots> {
         int nextPage = (_currentPage + 1) % items.length;
         _controller.animateToPage(
           nextPage,
-          duration: Duration(milliseconds: 100),
+          duration: Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
         setState(() {
@@ -235,11 +254,9 @@ class _CardSliderWithStaticDotsState extends State<CardSliderWithStaticDots> {
 
                 return GestureDetector(
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ContentsDetailPage(contentsID: '행사'),
-                      ),
+                    Navigator.of(context).pushNamed(
+                      '/contents_detail',
+                      arguments: items[index]['title']!,
                     );
                   },
                   child: Padding(

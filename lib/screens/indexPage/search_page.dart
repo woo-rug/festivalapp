@@ -3,7 +3,9 @@ import 'package:festivalapp/modules/base_layouts.dart';
 import 'package:flutter/material.dart';
 
 class SearchPage extends StatelessWidget {
-  const SearchPage({super.key});
+  final Map<String, dynamic>? arguments;
+
+  const SearchPage({super.key, this.arguments});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +19,7 @@ class SearchPage extends StatelessWidget {
         }
 
         return MaterialPageRoute(
-          builder: (_) => SearchPageView(args: settings.arguments as Map<String, dynamic>?),
+          builder: (_) => SearchPageView(args: arguments ?? settings.arguments as Map<String, dynamic>?),
         );
       },
     );
@@ -34,11 +36,13 @@ class SearchPageView extends StatefulWidget {
 }
 
 class _SearchPageViewState extends State<SearchPageView> {
+  bool _isLoadingSubcategory = false;
   // Access arguments passed from Navigator
   Map<String, dynamic>? get args => widget.args;
   final TextEditingController _searchController = TextEditingController();
   final PageController _pageController = PageController();
-  List<Map<String, String>> _festivalList = [];
+  List<Map<String, String>> _keywordFestivalList = [];
+  List<Map<String, String>> _categoryFestivalList = [];
   String? _selectedCategory;
   List<String> _selectedSubcategories = [];
   bool _showFestivalList = false;
@@ -46,6 +50,34 @@ class _SearchPageViewState extends State<SearchPageView> {
   @override
   void initState() {
     super.initState();
+    if (args != null) {
+      if (args!['tab'] == 0) {
+        _selectedTab = 0;
+        _pageController.jumpToPage(0);
+      } else if (args!['tab'] == 1) {
+        _selectedTab = 1;
+        _pageController.jumpToPage(1);
+        final category = args!['category'];
+        final subcategory = args!['subcategory'];
+        if (category != null) {
+          _navigateToSubcategories(category);
+        }
+        if (subcategory != null) {
+          // simulate a tap on subcategory
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            setState(() {
+              _categoryFestivalList = _getFestivalsForSubcategory(subcategory);
+              _showFestivalList = true;
+            });
+          });
+        }
+      }
+      if (args!['contentsID'] != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.of(context).pushNamed('/detail', arguments: args!['contentsID']);
+        });
+      }
+    }
     _fetchFestivals();
   }
 
@@ -59,7 +91,7 @@ class _SearchPageViewState extends State<SearchPageView> {
   Future<void> _fetchFestivals() async {
     await Future.delayed(Duration(seconds: 1)); // simulate network delay
     setState(() {
-      _festivalList = [
+      _keywordFestivalList = [
         {
           "title": "2025 동국대학교 봄 대동제",
           "subtitle": "2025.05.21 - 2025.05.23",
@@ -331,10 +363,10 @@ class _SearchPageViewState extends State<SearchPageView> {
           height: 500,
           child: ListView.separated(
             padding: const EdgeInsets.only(bottom: 150),
-            itemCount: _festivalList.length,
+            itemCount: _keywordFestivalList.length,
             separatorBuilder: (context, index) => const Divider(),
             itemBuilder: (context, index) {
-              final data = _festivalList[index];
+              final data = _keywordFestivalList[index];
               return ListTile(
                 leading: ClipOval(
                   child: Image.asset(
@@ -392,11 +424,15 @@ class _SearchPageViewState extends State<SearchPageView> {
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
                 onPressed: () {
-                  setState(() {
-                    _selectedCategory = null;
-                    _selectedSubcategories = [];
-                    _showFestivalList = false;
-                  });
+                  if (_showFestivalList) {
+                    setState(() {
+                      _showFestivalList = false;
+                    });
+                  } else {
+                    setState(() {
+                      _selectedCategory = null;
+                    });
+                  }
                 },
                 icon: const Icon(Icons.arrow_back),
                 label: const Text("이전으로 돌아가기"),
@@ -471,126 +507,108 @@ class _SearchPageViewState extends State<SearchPageView> {
                     );
                   }).toList(),
                 )
-              : _showFestivalList
-                  ? ListView.separated(
-                      padding: const EdgeInsets.only(bottom: 150),
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemCount: _festivalList.length,
-                      separatorBuilder: (context, index) => const Divider(),
-                      itemBuilder: (context, index) {
-                        final data = _festivalList[index];
-                        return ListTile(
-                          leading: ClipOval(
-                            child: Image.asset(
-                              'assets/images/event1.jpg',
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                            ),
+                  : _isLoadingSubcategory
+                      ? Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 48),
+                            child: CircularProgressIndicator(),
                           ),
-                          title: Text(data["title"]!),
-                          subtitle: Text(data["subtitle"]!),
-                          onTap: () {
-                            Navigator.of(context).pushNamed('/detail', arguments: data["title"]);
-                          },
-                        );
-                      },
-                    )
-                  : GridView.count(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 1.2,
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      children: _selectedSubcategories.map((item) {
-                        final lightColors = {
-                          '스포츠': [Color(0xFFD9EAF4), Color(0xFFC6DFEF)],
-                          '공연': [Color(0xFFFBF4D0), Color(0xFFF7E9A9)],
-                          '전시회': [Color(0xFFFBE3DD), Color(0xFFF6CDBC)],
-                          '팝업 스토어': [Color(0xFFF0EBF8), Color(0xFFE6DEF1)],
-                          '축제': [Color(0xFFE4F3E2), Color(0xFFD3EAD1)],
-                        };
-                        final colors = lightColors[_selectedCategory] ?? [Colors.grey[300]!, Colors.grey[200]!];
+                        )
+                      : _showFestivalList
+                          ? ListView.separated(
+                              padding: const EdgeInsets.only(bottom: 150),
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              itemCount: _categoryFestivalList.length,
+                              separatorBuilder: (context, index) => const Divider(),
+                              itemBuilder: (context, index) {
+                                final data = _categoryFestivalList[index];
+                                return ListTile(
+                                  leading: ClipOval(
+                                    child: Image.asset(
+                                      'assets/images/event1.jpg',
+                                      width: 60,
+                                      height: 60,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  title: Text(data["title"]!),
+                                  subtitle: Text(data["subtitle"]!),
+                                  onTap: () {
+                                    Navigator.of(context).pushNamed('/detail', arguments: data["title"]);
+                                  },
+                                );
+                              },
+                            )
+                          : GridView.count(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 1.2,
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              children: _selectedSubcategories.map((item) {
+                                final lightColors = {
+                                  '스포츠': [Color(0xFFD9EAF4), Color(0xFFC6DFEF)],
+                                  '공연': [Color(0xFFFBF4D0), Color(0xFFF7E9A9)],
+                                  '전시회': [Color(0xFFFBE3DD), Color(0xFFF6CDBC)],
+                                  '팝업 스토어': [Color(0xFFF0EBF8), Color(0xFFE6DEF1)],
+                                  '축제': [Color(0xFFE4F3E2), Color(0xFFD3EAD1)],
+                                };
+                                final colors = lightColors[_selectedCategory] ?? [Colors.grey[300]!, Colors.grey[200]!];
 
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _festivalList = [
-                                {
-                                  "title": "$item 페스티벌 1",
-                                  "subtitle": "2025.07.01 - 2025.07.03",
-                                },
-                                {
-                                  "title": "$item 페스티벌 2",
-                                  "subtitle": "2025.07.04 - 2025.07.06",
-                                },
-                                {
-                                  "title": "$item 페스티벌 2",
-                                  "subtitle": "2025.07.04 - 2025.07.06",
-                                },
-                                {
-                                  "title": "$item 페스티벌 2",
-                                  "subtitle": "2025.07.04 - 2025.07.06",
-                                },
-                                {
-                                  "title": "$item 페스티벌 2",
-                                  "subtitle": "2025.07.04 - 2025.07.06",
-                                },
-                                {
-                                  "title": "$item 페스티벌 2",
-                                  "subtitle": "2025.07.04 - 2025.07.06",
-                                },
-                                {
-                                  "title": "$item 페스티벌 2",
-                                  "subtitle": "2025.07.04 - 2025.07.06",
-                                },
-                                {
-                                  "title": "$item 페스티벌 2",
-                                  "subtitle": "2025.07.04 - 2025.07.06",
-                                },
-                                {
-                                  "title": "$item 페스티벌 2",
-                                  "subtitle": "2025.07.04 - 2025.07.06",
-                                },
-                                {
-                                  "title": "$item 페스티벌 2",
-                                  "subtitle": "2025.07.04 - 2025.07.06",
-                                },
-                              ];
-                              _showFestivalList = true;
-                            });
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: colors,
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
+                                return GestureDetector(
+                                  onTap: () async {
+                                    setState(() {
+                                      _isLoadingSubcategory = true;
+                                      _categoryFestivalList = [];
+                                    });
+                                    await Future.delayed(Duration(milliseconds: 300));
+                                    setState(() {
+                                      _categoryFestivalList = _getFestivalsForSubcategory(item);
+                                      _showFestivalList = true;
+                                      _isLoadingSubcategory = false;
+                                    });
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: colors,
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black12,
+                                          blurRadius: 4,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        item,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
                             ),
-                            child: Center(
-                              child: Text(
-                                item,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
         ],
       ),
     );
   }
 }
+
+  List<Map<String, String>> _getFestivalsForSubcategory(String subcategory) {
+    return List.generate(
+      5,
+      (index) => {
+        "title": "$subcategory 행사 ${index + 1}",
+        "subtitle": "2025.07.${(index + 10)} - 2025.07.${(index + 12)}",
+      },
+    );
+  }
