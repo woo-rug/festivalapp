@@ -25,7 +25,7 @@ class AuthHttpClient extends http.BaseClient {
         request.headers['Authorization'] = 'Bearer $newToken';
         response = await _inner.send(request);
       } else {
-        await authProvider.logout(context);
+        await authProvider.logout();
         if (context.mounted) {
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => const LoginPage()),

@@ -27,23 +27,21 @@ class _LoginPageState extends State<LoginPage> {
       _error = null;
     });
 
-    if (_usernameController.text == 'admin' && _passwordController.text == 'admin') {
-      final storage = FlutterSecureStorage();
-      await storage.write(key: 'accessToken', value: 'mock_access_token');
-      await storage.write(key: 'refreshToken', value: 'mock_refresh_token');
-      if (_keepLogin) {
-        await storage.write(key: 'keepLogin', value: 'true');
-      } else {
-        await storage.write(key: 'keepLogin', value: 'false');
-      }
+    final result = await _authService.login(
+      _usernameController.text,
+      _passwordController.text,
+      _keepLogin,
+    );
 
+    if (result) {
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/main');
       }
+      return;
     } else {
       setState(() {
         _isLoading = false;
-        _error = "로그인 실패";
+        _error = "로그인 정보를 확인해주세요.";
       });
     }
   }
@@ -120,15 +118,15 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
             const SizedBox(height: 16),
+            if (_error != null) ...[
+              Align(alignment: Alignment.center, child: Text(_error!, style: const TextStyle(color: Colors.red)),
+)
+            ],
             GradientButton(
               onPressed: _login,
               isBlue: true,
               text: '로그인',
             ),
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              Text(_error!, style: const TextStyle(color: Colors.red)),
-            ],
             const SizedBox(height: 12),
             GradientButton(
               onPressed: () {

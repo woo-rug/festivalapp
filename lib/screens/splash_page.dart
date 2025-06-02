@@ -19,33 +19,16 @@ class _SplashPageState extends State<SplashPage> {
 
   Future<void> _checkLoginStatus() async {
     await Future.delayed(const Duration(seconds: 2));
-    // try {
-    //   final authProvider = context.read<AuthProvider>();
-    //   final shouldKeepLogin = await authProvider.shouldKeepLogin();
-
-    //   if (shouldKeepLogin) {
-    //     final refreshedToken = await authProvider.refreshToken(context);
-    //     if (refreshedToken != null && mounted) {
-    //       Navigator.pushReplacementNamed(context, '/home');
-    //       return;
-    //     }
-    //   }
-
-    //   if (mounted) {
-    //     Navigator.pushReplacementNamed(context, '/login');
-    //   }
-    // } catch (e) {
-    //   if (mounted) {
-    //     Navigator.pushReplacementNamed(context, '/login');
-    //   }
-    // }
-
-    // 일단 keepLogin 값만 확인 후 메인/로그인 확인하는 코드로 작성
     final authProvider = context.read<AuthProvider>();
     final shouldKeepLogin = await authProvider.shouldKeepLogin();
+    final accessToken = await AuthService.getAccessToken();
 
-    if(shouldKeepLogin) { Navigator.pushReplacementNamed(context, '/main'); }
-    else{ Navigator.pushReplacementNamed(context, '/login');}
+    if (shouldKeepLogin && accessToken != null && accessToken.isNotEmpty) {
+      authProvider.getValidAccessToken(context);
+      Navigator.pushReplacementNamed(context, '/main');
+    } else {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
   }
 
   @override

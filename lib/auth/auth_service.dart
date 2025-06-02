@@ -16,25 +16,16 @@ class AuthService {
       body: jsonEncode({'username': username, 'password': password}),
     );
 
-    // 예시 과정
-    // final response = (username == 'admin' && password == 'admin123');
-    // if (response) {
-    //   // 로그인 성공
-    //   await _storage.saveToken('accessToken', 'accessToken123');
-    //   await _storage.saveToken('refreshToken', 'refreshToken123');
-    //   await _storage.saveToken('keepLogin', keepLogin.toString());
-    //   return true;
-    // } else {
-    //   return false;
-    // }
-
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
+      print(body['accessToken'] + ", " + body['refreshToken']);
       await _storage.saveToken('accessToken', body['accessToken']);
       await _storage.saveToken('refreshToken', body['refreshToken']);
       await _storage.saveToken('keepLogin', keepLogin.toString());
       return true;
     } else {
+      final body = jsonDecode(response.body);
+      print(body);
       return false;
     }
   }
@@ -55,19 +46,19 @@ class AuthService {
     if (response.statusCode == 200) {
       return true;
     } else if (response.statusCode == 401) {
-      return await tryReissueToken(context);
+      return await tryReissueToken();
     }
 
     return false;
   }
 
   // accessToken + refreshToken 사용해 재발급
-  Future<bool> tryReissueToken(BuildContext context) async {
+  Future<bool> tryReissueToken() async {
     final accessToken = await getAccessToken();
     final refreshToken = await getRefreshToken();
 
     if (accessToken == null || refreshToken == null) {
-      await logout(context);
+      await logout();
       return false;
     }
 
@@ -92,25 +83,26 @@ class AuthService {
       return true;
     }
 
-    await logout(context);
+    await logout();
     return false;
   }
 
   // 로그아웃
-  Future<void> logout(BuildContext context) async {
+  Future<void> logout() async {
     await _storage.deleteAll();
-    if (context.mounted) {
-      Navigator.pushReplacementNamed(context, '/login');
-    }
+    await _storage.saveToken('keepLogin', 'false');
   }
 
   // 저장된 토큰 가져오기
-  Future<String?> getAccessToken() async => await _storage.readToken('accessToken');
+  static Future<String?> getAccessToken() async {
+    final storage = SecureStorageService();
+    return await storage.readToken('accessToken');
+  }
   Future<String?> getRefreshToken() async => await _storage.readToken('refreshToken');
   Future<bool> shouldKeepLogin() async => (await _storage.readToken('keepLogin')) == 'true';
 
   // 무조건 토큰 재발급 함수
-  Future<String?> refreshToken(BuildContext context) async {
+  Future<String?> refreshToken() async {
     final accessToken = await getAccessToken();
     final refreshToken = await getRefreshToken();
 

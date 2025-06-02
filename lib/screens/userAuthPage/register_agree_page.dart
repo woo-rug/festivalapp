@@ -1,3 +1,4 @@
+import 'package:festivalapp/modules/title_modules.dart';
 import 'package:festivalapp/screens/userAuthPage/register_form_page.dart';
 
 import '../../modules/base_layouts.dart';
@@ -74,14 +75,14 @@ class TermsItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+          TitleModules.title(title),
           const SizedBox(height: 8),
           Container(
-            height: 160,
+            height: 480,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey.shade300),

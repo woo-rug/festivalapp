@@ -174,7 +174,35 @@ class _ProfileHome extends StatelessWidget {
                   collapsedShape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide.none),
                   shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide.none),
                   children: [
-                    ListTile(title: const Text("로그아웃", style:TextStyle(fontSize: 14)), onTap: () {}),
+                    ListTile(title: const Text("로그아웃", style:TextStyle(fontSize: 14)), onTap: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('로그아웃 하시겠습니까?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('취소'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('로그아웃'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        final storage = FlutterSecureStorage();
+                        final allValues = await storage.readAll();
+                          allValues.forEach((key, value) {
+                            print('$key: $value');
+                          });
+                        await storage.deleteAll();
+                        print("구분");
+                        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/login', (route) => false);
+                      }
+                    },),
                     ListTile(title: const Text("회원 탈퇴", style:TextStyle(fontSize: 14)), onTap: () {}),
                   ],
                 ),
