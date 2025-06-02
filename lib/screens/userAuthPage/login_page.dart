@@ -1,3 +1,4 @@
+import 'package:festivalapp/screens/userAuthPage/find_IDPW_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:festivalapp/modules/base_layouts.dart';
 import 'package:festivalapp/modules/button_modules.dart';
@@ -77,6 +78,7 @@ class _LoginPageState extends State<LoginPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            SizedBox(height: 36,),
             TextField(
               controller: _usernameController,
               decoration: const InputDecoration(
@@ -117,17 +119,17 @@ class _LoginPageState extends State<LoginPage> {
                 const Text("로그인 유지하기"),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             if (_error != null) ...[
-              Align(alignment: Alignment.center, child: Text(_error!, style: const TextStyle(color: Colors.red)),
-)
+              Align(alignment: Alignment.center, child: Text(_error!, style: const TextStyle(color: Colors.red)),)
             ],
             GradientButton(
               onPressed: _login,
               isBlue: true,
               text: '로그인',
+              height:60,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             GradientButton(
               onPressed: () {
                 Navigator.push(
@@ -139,11 +141,17 @@ class _LoginPageState extends State<LoginPage> {
               },
               isBlue: false,
               text: '회원가입',
+              height:60,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             TextButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/find');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                  builder: (BuildContext context) => const FindIDPWPage()
+                  ),
+                );
               },
               child: const Text(
                 '아이디/비밀번호 찾기',

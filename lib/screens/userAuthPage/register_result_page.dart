@@ -7,10 +7,12 @@ import 'package:flutter/material.dart';
 
 class RegisterResult extends StatelessWidget {
   final bool success;
+  final String? errorMessage;
 
   const RegisterResult({
     required this.success,
     super.key,
+    this.errorMessage = "오류가 발생했습니다.",
   });
 
   @override
@@ -48,10 +50,11 @@ class RegisterResult extends StatelessWidget {
               color: Colors.white,
             ),
           ),
-          const Text(
-            "(오류 메세지)",
+          SizedBox(height: 12,),
+          Text(
+            errorMessage!,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.w500,
               color: Colors.white,
             ),
@@ -59,24 +62,30 @@ class RegisterResult extends StatelessWidget {
         ],
       )
       ,
-      body: success ? 
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-        Container(
-          decoration: BoxDecoration(color: Colors.grey),
-          height: 300,
-          width: 300,
-        ),
-        SizedBox(height:16),
-        GradientButton(text: "로그인 화면으로", onPressed: () {Navigator.push(context,MaterialPageRoute(builder: (_) => LoginPage()));}, isBlue: true, height:55, width:350),
-      ],):
-      Column(children: [
-        GradientButton(text: "로그인 화면으로", onPressed: () {Navigator.push(context,MaterialPageRoute(builder: (_) => LoginPage()));}, isBlue: true, height:55, width:350),
-        GradientButton(text: "회원가입 화면으로", onPressed: () {Navigator.push(context,MaterialPageRoute(builder: (_) => RegisterAgreePage()));}, isBlue: false, height:55, width:350)
-      ],)
-      ,
+      body: Padding(
+        padding: EdgeInsets.fromLTRB(24, 16, 24, 0),
+        child: success ? 
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                decoration: BoxDecoration(color: Colors.grey),
+                height: 300,
+                width: 300,
+              ),
+              SizedBox(height:16),
+              GradientButton(text: "로그인 화면으로", onPressed: () {Navigator.push(context,MaterialPageRoute(builder: (_) => LoginPage()));}, isBlue: true, height:55, width:350),
+            ],):
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(height:72),
+              GradientButton(text: "로그인 화면으로", onPressed: () {Navigator.push(context,MaterialPageRoute(builder: (_) => LoginPage()));}, isBlue: true, height:55, width:350),
+              SizedBox(height:12),
+              GradientButton(text: "회원가입 화면으로", onPressed: () {Navigator.push(context,MaterialPageRoute(builder: (_) => RegisterAgreePage()));}, isBlue: false, height:55, width:350)
+            ],
+          ),
+      )
     );
   }
 }

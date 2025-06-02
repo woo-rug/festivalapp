@@ -20,7 +20,7 @@ class MainPage extends StatelessWidget {
         }
         return MaterialPageRoute(
           builder: (_) => FlatScreen(
-            appBarHeight: 100,
+            appBarHeight: 80,
             appBar: Container(
               height: 60,
               width: 60,

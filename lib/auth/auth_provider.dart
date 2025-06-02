@@ -11,7 +11,7 @@ class AuthProvider extends ChangeNotifier {
   String? get accessToken => _accessToken;
 
   Future<void> loadTokensFromStorage() async {
-    _accessToken = await AuthService.getAccessToken();
+    _accessToken = await _authService.getAccessToken();
     _refreshToken = await _authService.getRefreshToken();
     notifyListeners();
   }
@@ -19,7 +19,7 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> login(String username, String password, bool keepLogin) async {
     final result = await _authService.login(username, password, keepLogin);
     if (result) {
-      _accessToken = await AuthService.getAccessToken();
+      _accessToken = await _authService.getAccessToken();
       _refreshToken = await _authService.getRefreshToken();
       _keepLogin = await _authService.shouldKeepLogin();
       notifyListeners();
@@ -42,7 +42,7 @@ class AuthProvider extends ChangeNotifier {
   Future<String?> getValidAccessToken(BuildContext context) async {
     final isValid = await _authService.validateToken(context);
     if (isValid) {
-      _accessToken = await AuthService.getAccessToken();
+      _accessToken = await _authService.getAccessToken();
       notifyListeners();
       return _accessToken;
     }

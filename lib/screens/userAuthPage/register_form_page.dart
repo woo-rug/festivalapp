@@ -83,18 +83,22 @@ class _RegisterFormPageState extends State<RegisterFormPage> {
                     'nickname': nicknameController.text,
                     'gender': genderToEnum(selectedGender),
                     'location': locationController.text,
-                    'age': ageController.text,
+                    'age': int.parse(ageController.text),
                     'authcode' : emailCodeController.text,
                   }),
                 );
 
-                if (response.statusCode == 200) {
+                if (response.statusCode == 201) {
+                  print('응답 코드: ${response.statusCode}');
+                  print('응답 바디: ${response.body}');
+                  print(idController.text + ", " + pwController.text + ", " + nameController.text + ", " + emailController.text + ", " + nicknameController.text + ", " + genderToEnum(selectedGender) + ", " + locationController.text + ", " + ageController.text + ", " + emailCodeController.text + ", ");
                   Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterAdditionalPage()));
                 } else {
                   print('응답 코드: ${response.statusCode}');
                   print('응답 바디: ${response.body}');
+                  final decoded = jsonDecode(response.body);
                   print(idController.text + ", " + pwController.text + ", " + nameController.text + ", " + emailController.text + ", " + nicknameController.text + ", " + genderToEnum(selectedGender) + ", " + locationController.text + ", " + ageController.text + ", " + emailCodeController.text + ", ");
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterResult(success: false,)));
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterResult(success: false, errorMessage: decoded['message'],)));
                 }
               }
             : null,
@@ -224,6 +228,7 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
   bool isNicknameAvailable = false;
   bool isEmailValid = true;
   bool isAgeValid = true;
+  String? _idDuplicateMessage;
   void _validateAge(String value) {
     final age = int.tryParse(value);
     setState(() {
@@ -280,27 +285,36 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
   }
 
   Future<void> _checkIdDuplicate() async {
-    // api 지원 이후 수정 예정
-    // final response = await http.get(Uri.parse('https://server.com/check-id?id=${widget.idController.text}'));
-    // if (response.statusCode == 200 && jsonDecode(response.body)['available'] == true) {
-    //   setState(() {
-    //     isIdAvailable = true;
-    //   });
-    // } else {
-    //   setState(() {
-    //     isIdAvailable = false;
-    //   });
-    // }
-    setState(() {
-      isIdAvailable = true; // 임시 코드
-    });
-
+    final response = await http.post(
+      Uri.parse('http://182.222.119.214:8081/api/members/join/verify-username'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'username': widget.idController.text}),
+    );
+    if (response.statusCode == 200) {
+      // success handling
+      print("아이디 중복 검증 성공");
+      setState(() {
+        isIdAvailable = true;
+        _idDuplicateMessage = "✅ 사용 가능한 아이디입니다.";
+      });
+    } else {
+      // error handling
+      final decoded = jsonDecode(response.body);
+      setState(() {
+        isIdAvailable = false;
+        _idDuplicateMessage = "❌ " + decoded['message'];
+      });
+      print("아이디 중복 검증 오류: ${decoded['message']}");
+      print('응답 코드: ${response.statusCode}');
+      print('응답 바디: ${response.body}');
+    }
     _checkAllFilled();
   }
 
   Future<void> _checkNicknameDuplicate() async {
-    // api 지원 이후 수정 예정
-    // final response = await http.get(Uri.parse('https://server.com/check-nickname?nickname=${widget.nicknameController.text}'));
+    // api 지원 이후 수정 예정(닉네임 중복)
+    // final response = await http.get(Uri.parse('http://182.222.119.214/join/verify-username'));
+
     // if (response.statusCode == 200 && jsonDecode(response.body)['available'] == true) {
     //   setState(() {
     //     isNicknameAvailable = true;
@@ -323,7 +337,7 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': widget.emailController.text}),
     );
-    if (response.statusCode == 200) {
+    if (response.statusCode == 204) {
       // success handling
       print("이메일 보내기 위한 서버 접속 성공");
     } else {
@@ -361,16 +375,26 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
                   label: "아이디",
                   controller: widget.idController,
                   hintText: "아이디 입력",
-                  onChanged: (_) => setState(() => isIdAvailable = false),
+                  onChanged: (_) => setState(() {
+                    isIdAvailable = false;
+                    _idDuplicateMessage = null;
+                  }),
                 ),
               ),
               const SizedBox(width: 8),
               GradientButton(text: '중복확인', onPressed: _checkIdDuplicate, isBlue: true, width: 150),
             ],
           ),
-          if (isIdAvailable)
-            const Text("✅ 사용 가능한 아이디입니다.", style: TextStyle(color: Colors.green, fontSize: 13)),
-
+          if (_idDuplicateMessage != null)
+            Padding(padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
+              child: Text(
+                _idDuplicateMessage!,
+                style: TextStyle(
+                  color: isIdAvailable ? Colors.green : Colors.red,
+                  fontSize: 13,
+                ),
+              ),
+            ),
           const SizedBox(height: 16),
 
           CommonTextField(
@@ -407,7 +431,7 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
             onChanged: _validateAge,
           ),
           if (!isAgeValid)
-            const Text("❌ 올바른 나이값을 입력하세요.", style: TextStyle(color: Colors.red, fontSize: 13)),
+            const Padding(padding: EdgeInsets.fromLTRB(0, 8, 8, 8), child: Text("❌ 올바른 나이값을 입력하세요.", style: TextStyle(color: Colors.red, fontSize: 13)),),
           const SizedBox(height: 16),
 
           Row(
@@ -426,7 +450,7 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
             ],
           ),
           if (!isEmailValid)
-            const Text("❌ 이메일 형식이 맞지 않습니다.", style: TextStyle(color: Colors.red, fontSize: 13)),
+            const Padding(padding: EdgeInsets.fromLTRB(0, 8, 8, 8), child: Text("❌ 이메일 형식이 맞지 않습니다.", style: TextStyle(color: Colors.red, fontSize: 13)),),
           const SizedBox(height: 8),
           CommonTextField(label: "인증번호", controller: widget.emailCodeController, onChanged: (_) => _checkAllFilled()),
 
@@ -474,7 +498,7 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
             ],
           ),
           if (isNicknameAvailable)
-            const Text("✅ 사용 가능한 닉네임입니다.", style: TextStyle(color: Colors.green, fontSize: 13)),
+            const Padding(padding: EdgeInsets.fromLTRB(0, 8, 8, 8), child: Text("✅ 사용 가능한 닉네임입니다.", style: TextStyle(color: Colors.green, fontSize: 13)),),
 
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(

@@ -94,9 +94,8 @@ class AuthService {
   }
 
   // 저장된 토큰 가져오기
-  static Future<String?> getAccessToken() async {
-    final storage = SecureStorageService();
-    return await storage.readToken('accessToken');
+  Future<String?> getAccessToken() async {
+    return await _storage.readToken('accessToken');
   }
   Future<String?> getRefreshToken() async => await _storage.readToken('refreshToken');
   Future<bool> shouldKeepLogin() async => (await _storage.readToken('keepLogin')) == 'true';

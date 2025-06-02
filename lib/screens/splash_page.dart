@@ -20,8 +20,9 @@ class _SplashPageState extends State<SplashPage> {
   Future<void> _checkLoginStatus() async {
     await Future.delayed(const Duration(seconds: 2));
     final authProvider = context.read<AuthProvider>();
+    final AuthService _authService = AuthService();
     final shouldKeepLogin = await authProvider.shouldKeepLogin();
-    final accessToken = await AuthService.getAccessToken();
+    final accessToken = await _authService.getAccessToken();
 
     if (shouldKeepLogin && accessToken != null && accessToken.isNotEmpty) {
       authProvider.getValidAccessToken(context);

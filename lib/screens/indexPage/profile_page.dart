@@ -199,7 +199,6 @@ class _ProfileHome extends StatelessWidget {
                             print('$key: $value');
                           });
                         await storage.deleteAll();
-                        print("구분");
                         Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/login', (route) => false);
                       }
                     },),

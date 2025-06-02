@@ -6,19 +6,22 @@ class CurveScreen extends StatelessWidget {
   final Widget title;
   final Widget body;
   final double titleToSubtitleRatio;
-
+  final Widget? floatingActionButton;
 
   const CurveScreen({
     super.key,
     required this.title,
     required this.body,
-    this.titleToSubtitleRatio = 0.02
+    this.titleToSubtitleRatio = 0.02, 
+    this.floatingActionButton
   });
 
   @override
   Widget build(BuildContext context) {
     final safeAreaHeight = MediaQuery.of(context).size.height -MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom;
     return Scaffold(
+      appBar:null,
+      resizeToAvoidBottomInset: true,
       body : Stack(
         children: [
           const Background(),
@@ -26,14 +29,14 @@ class CurveScreen extends StatelessWidget {
             child: Column(
               children: [
                 SizedBox(
-                  height: safeAreaHeight * 0.4,
+                  height: safeAreaHeight * 0.3,
                   child: Stack(
                     children: [
                       Column(
                         children: [
                           SizedBox(height:safeAreaHeight*0.2),
                           SizedBox(
-                            height: safeAreaHeight*0.2,
+                            height: safeAreaHeight*0.1,
                             width: double.infinity,
                             child: ClipPath(
                               clipper: BottomOnlyWhiteClipper(),
@@ -56,7 +59,7 @@ class CurveScreen extends StatelessWidget {
                   )
                 ),
                 Container(
-                  height: safeAreaHeight * 0.6,
+                  height: safeAreaHeight * 0.7,
                   width: MediaQuery.of(context).size.width,
                   color: Colors.white,
                   child : Stack(
@@ -69,7 +72,9 @@ class CurveScreen extends StatelessWidget {
             ),
           ),
         ],
-      )
+      ),
+      floatingActionButton: floatingActionButton,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
@@ -79,8 +84,8 @@ class BottomOnlyWhiteClipper extends CustomClipper<Path> {
   final double curvatureRatio; // 곡률 정도 (0.0 ~ 2.0)
 
   BottomOnlyWhiteClipper({
-    this.startYRatio = 0.3,     // 시작 높이
-    this.curvatureRatio = 1,  // 곡률
+    this.startYRatio = 0.1,     // 시작 높이
+    this.curvatureRatio = 1.25,  // 곡률
   });
 
   @override
