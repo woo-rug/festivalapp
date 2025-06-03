@@ -229,6 +229,7 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
   bool isEmailValid = true;
   bool isAgeValid = true;
   String? _idDuplicateMessage;
+  String? _emailSendMessage;
   void _validateAge(String value) {
     final age = int.tryParse(value);
     setState(() {
@@ -326,9 +327,8 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
     // }
     setState(() {
       isNicknameAvailable = true; // 임시 코드
+      _checkAllFilled();
     });
-    
-    _checkAllFilled();
   }
 
   Future<void> _sendEmailVerification() async {
@@ -338,14 +338,18 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
       body: jsonEncode({'email': widget.emailController.text}),
     );
     if (response.statusCode == 204) {
-      // success handling
       print("이메일 보내기 위한 서버 접속 성공");
+      setState(() {
+        _emailSendMessage = "✅ 이메일이 성공적으로 전송되었습니다.";
+      });
     } else {
-      // error handling
       print(widget.emailController.text + "로 이메일 보내기");
       print('응답 코드: ${response.statusCode}');
       print('응답 바디: ${response.body}');
       print("이메일 서버 접속 실패");
+      setState(() {
+        _emailSendMessage = "❌ 이메일 전송에 실패했습니다.";
+      });
     }
   }
 
@@ -451,6 +455,17 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
           ),
           if (!isEmailValid)
             const Padding(padding: EdgeInsets.fromLTRB(0, 8, 8, 8), child: Text("❌ 이메일 형식이 맞지 않습니다.", style: TextStyle(color: Colors.red, fontSize: 13)),),
+          if (_emailSendMessage != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                _emailSendMessage!,
+                style: TextStyle(
+                  color: _emailSendMessage!.startsWith("✅") ? Colors.green : Colors.red,
+                  fontSize: 13,
+                ),
+              ),
+            ),
           const SizedBox(height: 8),
           CommonTextField(label: "인증번호", controller: widget.emailCodeController, onChanged: (_) => _checkAllFilled()),
 
@@ -516,8 +531,10 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
               );
             }).toList(),
             onChanged: (value) {
-              widget.onGenderChanged(value);
-              _checkAllFilled();
+              setState(() {
+                widget.onGenderChanged(value);
+                _checkAllFilled();
+              });
             },
           ),
         ],

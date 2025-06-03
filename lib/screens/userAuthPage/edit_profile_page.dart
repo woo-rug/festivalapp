@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:festivalapp/screens/userAuthPage/edit_result_page.dart';
 import 'package:festivalapp/screens/userAuthPage/register_form_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -6,6 +7,7 @@ import 'package:festivalapp/modules/base_layouts.dart';
 import 'package:festivalapp/modules/button_modules.dart';
 import 'package:festivalapp/modules/postcode_page.dart';
 import 'package:festivalapp/modules/title_modules.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -28,6 +30,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   bool isFormValid = false;
   bool isNicknameChecked = false;
   String? nicknameCheckResult;
+  String? originalNickname;
 
   void _checkFormValid() {
     setState(() {
@@ -36,7 +39,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     locationController.text.isNotEmpty &&
                     selectedGender != null &&
                     selectedGender != '선택하세요' &&
-                    isNicknameChecked;
+                    (nicknameController.text.trim() == originalNickname || isNicknameChecked);
     });
   }
 
@@ -70,19 +73,53 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _checkFormValid();
   }
 
+  Future<void> _fetchUserProfile() async {
+    const storage = FlutterSecureStorage();
+    final accessToken = await storage.read(key: 'accessToken');
+
+    if (accessToken == null) return;
+
+    final response = await http.get(
+      Uri.parse('http://182.222.119.214:8081/api/members/profile/me'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+    );
+
+    print(response.body);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        idController.text = data['username'] ?? '';
+        nameController.text = data['name'] ?? '';
+        emailController.text = data['email'] ?? '';
+        nicknameController.text = data['nickname'] ?? '';
+        originalNickname = data['nickname'];
+        ageController.text = (data['age'] ?? '').toString();
+        locationController.text = data['location'] ?? '';
+        selectedGender = data['gender'] == 'MALE' ? '남성' : data['gender'] == 'FEMALE' ? '여성' : '선택하세요';
+        _checkFormValid();
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    nicknameController.addListener(() {
-      setState(() {
-        isNicknameChecked = false;
+    _fetchUserProfile().then((_) {
+      nicknameController.addListener(() {
+        setState(() {
+          isNicknameChecked = false;
+        });
+        _checkFormValid();
       });
-      _checkFormValid();
+      ageController.addListener(() {
+        _validateAge(ageController.text);
+      });
+      locationController.addListener(_checkFormValid);
     });
-    ageController.addListener(() {
-      _validateAge(ageController.text);
-    });
-    locationController.addListener(_checkFormValid);
   }
 
   @override
@@ -107,14 +144,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
           const SizedBox(height: 4),
           const Text("수정할 수 없는 항목입니다.", style: TextStyle(color: Colors.grey, fontSize: 12)),
           const SizedBox(height: 16),
-          _buildReadOnlyField("이름", nameController),
-          const SizedBox(height: 4),
-          const Text("수정할 수 없는 항목입니다.", style: TextStyle(color: Colors.grey, fontSize: 12)),
-          const SizedBox(height: 16),
           _buildReadOnlyField("이메일", emailController),
           const SizedBox(height: 4),
           const Text("수정할 수 없는 항목입니다.", style: TextStyle(color: Colors.grey, fontSize: 12)),
           const SizedBox(height: 16),
+          _buildEditableField("이름", nameController),
+          const SizedBox(height: 16),
+
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -203,15 +239,41 @@ class _EditProfilePageState extends State<EditProfilePage> {
               _checkFormValid();
             },
           ),
-          const SizedBox(height: 100),
+          const SizedBox(height: 150),
         ],
       ),
       floatingActionButton: FloatingButton(
         text: "수정 완료",
         onPressed: isFormValid
-            ? () {
-                // 서버 수정 요청 로직 추가
-                Navigator.pop(context);
+            ? () async {
+                final genderCode = selectedGender == '남성' ? 'MALE' : selectedGender == '여성' ? 'FEMALE' : null;
+                final accessToken = await const FlutterSecureStorage().read(key: 'accessToken');
+                final response = await http.put(
+                  Uri.parse('http://182.222.119.214:8081/api/members/profile/me'),
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer $accessToken',
+                  },
+                  body: jsonEncode({
+                    'name': nameController.text,
+                    'nickname': nicknameController.text,
+                    'email' : emailController.text,
+                    'age': int.tryParse(ageController.text),
+                    'location': locationController.text,
+                    'gender': genderCode,
+                  }),
+                );
+                print('응답 상태 코드: ${response.statusCode}');
+                print('응답 본문: ${response.body}');
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EditResultPage(
+                      success: response.statusCode == 200 || response.statusCode == 204,
+                      type: '회원 정보',
+                    ),
+                  ),
+                );
               }
             : null,
         isBlue: isFormValid,

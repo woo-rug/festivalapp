@@ -2,6 +2,8 @@ import 'package:festivalapp/modules/base_layouts.dart';
 import 'package:festivalapp/screens/userAuthPage/check_PW_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -28,7 +30,42 @@ class ProfilePage extends StatelessWidget {
   }
 }
 
-class _ProfileHome extends StatelessWidget {
+class _ProfileHome extends StatefulWidget {
+  @override
+  State<_ProfileHome> createState() => _ProfileHomeState();
+}
+
+class _ProfileHomeState extends State<_ProfileHome> {
+  Map<String, dynamic>? _userData;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    final storage = FlutterSecureStorage();
+    final accessToken = await storage.read(key: 'accessToken');
+
+    final response = await http.get(
+      Uri.parse('http://182.222.119.214:8081/api/members/profile/me'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        _userData = data;
+      });
+    } else {
+      print('유저 정보를 불러오는 데 실패했습니다: ${response.statusCode}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -58,23 +95,41 @@ class _ProfileHome extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text("닉네임", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                    SizedBox(height: 2),
-                    Text("홍길동", style: TextStyle(color: Colors.grey)),
-                    SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Text("남", style: TextStyle(fontSize: 12, color: Colors.blue)),
-                        SizedBox(width: 8),
-                        Text("hong1234@naver.com", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      ],
-                    )
-                  ],
-                ),
+                child: _userData == null
+                    ? const Center(child: CircularProgressIndicator())
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _userData?["nickname"] ?? "",
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _userData?["name"] ?? "",
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              Text(
+                                (_userData?["gender"] == 'MALE'
+                                    ? '남'
+                                    : _userData?["gender"] == 'FEMALE'
+                                        ? '여'
+                                        : ''),
+                                style: const TextStyle(fontSize: 12, color: Colors.blue),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _userData?["email"] ?? "",
+                                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                              ),
+                            ],
+                          )
+                        ],
+                      ),
               ),
             ],
           ),

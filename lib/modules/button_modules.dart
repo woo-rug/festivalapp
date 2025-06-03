@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class GradientButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool isBlue;
   final double height;
   final double width;

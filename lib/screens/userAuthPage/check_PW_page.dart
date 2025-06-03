@@ -4,7 +4,7 @@ import 'package:festivalapp/auth/secure_storage_service.dart';
 import 'package:festivalapp/modules/base_layouts.dart';
 import 'package:festivalapp/modules/button_modules.dart';
 import 'package:festivalapp/screens/userAuthPage/edit_profile_page.dart';
-import 'package:festivalapp/screens/userAuthPage/reset_PW_page.dart';
+import 'package:festivalapp/screens/userAuthPage/edit_PW_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -22,6 +22,8 @@ class _CheckPWPageState extends State<CheckPWPage> {
   final TextEditingController _passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  String? _errorMessage;
 
   Future<bool> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return false;
@@ -58,9 +60,10 @@ class _CheckPWPageState extends State<CheckPWPage> {
         return true;
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('비밀번호가 일치하지 않습니다.')),
-      );
+      setState(() {
+        _errorMessage = '비밀번호가 일치하지 않습니다.';
+      });
+      _formKey.currentState!.validate();
       return false;
     }
     return false;
@@ -98,14 +101,29 @@ class _CheckPWPageState extends State<CheckPWPage> {
               key: _formKey,
               child: TextFormField(
                 controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
+                obscureText: _obscurePassword,
+                decoration: InputDecoration(
                   labelText: '비밀번호',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return '비밀번호를 입력해주세요';
+                  }
+                  if (_errorMessage != null) {
+                    final message = _errorMessage;
+                    _errorMessage = null;
+                    return message;
                   }
                   return null;
                 },
@@ -121,7 +139,7 @@ class _CheckPWPageState extends State<CheckPWPage> {
                     MaterialPageRoute(
                       builder: (context) => widget.actionType == 'editProfile'
                           ? const EditProfilePage()
-                          : const ResetPWPage(),
+                          : EditPWPage(currentPassword: _passwordController.text),
                     ),
                   );
                 }

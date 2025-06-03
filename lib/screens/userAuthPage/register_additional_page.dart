@@ -50,39 +50,60 @@ class _RegisterAdditionalPageState extends State<RegisterAdditionalPage> {
             userName: "홍길동",
             onAnswerComplete: (value) => setState(() => isComplete = value),
           ),
-          SizedBox(height: 16), // 위젯 사이 간격 조정, 윗부분에 간격 두는 용도 
+          SizedBox(height: 16),
         ],
       ),
       floatingActionButton: FloatingButton(
-        text: "다음 페이지로", // Keyword1, Keyword2, Keyword3로 키값 사용, /api/members/keywords로 연동
-        onPressed: isComplete ? 
-        // () async {
-        //       final selectedIndexes = _sectionKey.currentState?.selectedIndexes;
-        //       final selectedAnswers = _sectionKey.currentState?.questions.asMap().entries.map((entry) {
-        //         final qIndex = entry.key;
-        //         final q = entry.value;
-        //         final selected = selectedIndexes?[qIndex];
-        //         return {
-        //           'question': q['text'],
-        //           'answer': selected != null ? q['options'][selected] : null
-        //         };
-        //       }).toList();
+        text: "다음 페이지로", // Keyword1, Keyword2, Keyword3로 키값 사용
+        onPressed: isComplete
+            ? () async {
+                final selectedIndexes = _sectionKey.currentState?.selectedIndexes;
+                final selectedAnswers = _sectionKey.currentState?.questions.asMap().entries.map((entry) {
+                  final qIndex = entry.key;
+                  final q = entry.value;
+                  final selected = selectedIndexes?[qIndex];
+                  return {
+                    'Keyword$qIndex': q['text'],
+                    'answer': selected != null ? q['options'][selected] : null,
+                  };
+                }).toList();
 
-        //       final response = await http.post(
-        //         Uri.parse('https://yourserver.com/submit-answers'),
-        //         headers: {'Content-Type': 'application/json'},
-        //         body: jsonEncode({'answers': selectedAnswers}),
-        //       );
+                try {
+                  final response = await http.post(
+                    Uri.parse('http://182.222.119.214:8081/api/members/keywords'),
+                    headers: {'Content-Type': 'application/json'},
+                    body: jsonEncode({'answers': selectedAnswers}),
+                  );
 
-        //       Navigator.push(
-        //         context,
-        //         MaterialPageRoute(builder: (_) => RegisterResult(
-        //           //success: response.statusCode == 200
-        //         )),
-        //       );
-        //     }
-        () {Navigator.push(context,MaterialPageRoute(builder: (_) => RegisterResult(success:true)));}
-          : null,
+                  if (response.statusCode == 200 || response.statusCode == 204) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => RegisterResult(success: true)),
+                    );
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RegisterResult(
+                          success: false,
+                          errorMessage: '서버에서 오류가 발생했습니다. (${response.statusCode})',
+                        ),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => RegisterResult(
+                        success: false,
+                        errorMessage: '네트워크 오류가 발생했습니다: $e',
+                      ),
+                    ),
+                  );
+                }
+              }
+            : null,
         isBlue: isComplete ? true : false,
       ),
     );

@@ -65,9 +65,16 @@ class _FindIDPWPageState extends State<FindIDPWPage> {
         body: jsonEncode(body),
       );
 
-      if (response.statusCode == 200) {
-        return {'success': true, 'message': response.body};
-      } else {
+      print('응답 상태 코드: ${response.statusCode}');
+      print(response.body);
+
+      if (response.statusCode == 200) { // 아이디 찾기 성공
+        return {'success': true, 'message': '${nameController.text.trim()}님의 아이디는 ${response.body}입니다.'};
+      } else if(response.statusCode == 204){ // 비밀번호 초기화 성공
+        return {'success': true, 'message': '비밀번호가 초기화되었습니다.\n임시 비밀번호는 이메일로 전송되었습니다.\n로그인 이후 비밀번호를 재설정하세요.'};
+      }
+      
+      else { // 둘 다 오류
         final decoded = jsonDecode(response.body);
         return {'success': false, 'message': decoded['message'] ?? '알 수 없는 오류'};
       }
@@ -107,6 +114,27 @@ class _FindIDPWPageState extends State<FindIDPWPage> {
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           children: [
+            GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.arrow_back, color: Colors.black87),
+                  SizedBox(width: 8),
+                  Text(
+                    '뒤로가기',
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
                 color: const Color(0xFFEEEEEE),
@@ -135,23 +163,31 @@ class _FindIDPWPageState extends State<FindIDPWPage> {
           ],
         ),
       ),
-      floatingActionButton: GradientButton(
-        text: _currentPage == 0 ? '아이디 정보 찾기' : '비밀번호 초기화',
-        onPressed: () async {
-          final result = await _check();
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => FindIDPWResultPage(
-                isID: _currentPage == 0,
-                message: result['message'],
-              ),
-            ),
+      floatingActionButton: ValueListenableBuilder<bool>(
+        valueListenable: _formValidNotifier,
+        builder: (context, isValid, _) {
+          return GradientButton(
+            text: _currentPage == 0 ? '아이디 정보 찾기' : '비밀번호 초기화',
+            onPressed: isValid
+                ? () async {
+                    final result = await _check();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FindIDPWResultPage(
+                          isID: _currentPage == 0,
+                          result: result['success'],
+                          message: result['message'],
+                        ),
+                      ),
+                    );
+                  }
+                : null,
+            isBlue: isValid,
+            height: 60,
+            width: 320,
           );
         },
-        isBlue: true,
-        height: 60,
-        width: 320,
       ),
     );
   }
