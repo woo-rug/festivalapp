@@ -25,11 +25,16 @@ class _PageIndexerState extends State<PageIndexer> {
   }
 
   void _onTap(int index) {
-    if (index < widget.pages.length && _selectedIndex != index) {
-      setState(() {
-        _selectedIndex = index;
-        _pages[index] ??= widget.pages[index];
-      });
+    if (index < widget.pages.length) {
+      if (_selectedIndex != index) {
+        setState(() {
+          _selectedIndex = index;
+          _pages[index] ??= widget.pages[index];
+        });
+      } else {
+        // Re-tap on current tab: pop to root
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
     }
   }
 
@@ -60,7 +65,7 @@ class _PageIndexerState extends State<PageIndexer> {
                 child: Container(
                   //height: 72, // 고정 높이로 설정 (SafeArea 길이 포함 안함)
                   decoration: BoxDecoration(
-                    color: Colors.white70,
+                    color: const Color.fromARGB(255, 222, 222, 222).withOpacity(0.85),
                     borderRadius: BorderRadius.circular(32),
                     border: Border.all(
                       color: const Color.fromARGB(232, 223, 223, 223),
@@ -85,7 +90,7 @@ class _PageIndexerState extends State<PageIndexer> {
                       onTap: _onTap,
                       type: BottomNavigationBarType.fixed,
                       selectedItemColor: const Color(0xFF1976D2),
-                      unselectedItemColor: Colors.blueGrey,
+                      unselectedItemColor: const Color.fromARGB(255, 102, 102, 102),
                       backgroundColor: Colors.transparent,
                       elevation: 0,
                       showSelectedLabels: true,

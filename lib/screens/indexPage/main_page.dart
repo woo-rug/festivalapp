@@ -3,6 +3,7 @@ import 'package:festivalapp/modules/base_layouts.dart';
 import 'package:festivalapp/modules/slider_modules.dart';
 import 'package:festivalapp/modules/title_modules.dart';
 import 'package:festivalapp/screens/contentsPage/contents_detail_page.dart';
+import 'package:festivalapp/screens/contentsPage/forum_page.dart';
 import 'package:festivalapp/screens/contentsPage/my_pick_page.dart';
 import 'package:flutter/material.dart';
 
@@ -98,7 +99,11 @@ class _MainPageBody extends StatelessWidget {
             ),
             Expanded(
               child: GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => ForumPage(category: 1,)),
+                );},
                 child: Container(
                   height: 90,
                   margin: EdgeInsets.only(right: 24, left: 12, top: 16, bottom: 16),

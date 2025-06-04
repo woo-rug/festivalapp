@@ -2,6 +2,7 @@ import 'package:festivalapp/modules/base_layouts.dart';
 import 'package:festivalapp/modules/button_modules.dart';
 import 'package:festivalapp/modules/map_modules.dart';
 import 'package:festivalapp/modules/title_modules.dart';
+import 'package:festivalapp/screens/contentsPage/forum_page.dart';
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -37,8 +38,8 @@ class ContentsDetailPage extends StatelessWidget {
             SliverToBoxAdapter(
               child: FutureBuilder<List<Map<String, String>>>(
                 future: fetchLinkTitles([
-                  "https://example.com",
-                  "https://tickets.example.com",
+                  "https://www.naver.com",
+                  "https://tickets.interpark.com",
                 ]),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
@@ -55,8 +56,8 @@ class ContentsDetailPage extends StatelessWidget {
                     ],
                     siteLinks: snapshot.data,
                     photoUrls: [
-                      "https://via.placeholder.com/300x200",
-                      "https://via.placeholder.com/300x201",
+                      "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F5906%2F2025%2F01%2F01%2F0000038280_004_20250223165015175.jpg&type=sc960_832",
+                      "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F5906%2F2025%2F01%2F01%2F0000038280_004_20250223165015175.jpg&type=sc960_832",
                     ],
                     dailyInfo: [
                       {
@@ -238,7 +239,14 @@ class ContentsHeader extends StatelessWidget {
                       _FavoriteButton(percent: percent),
                       GradientButton(
                         text: "게시판",
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ForumPage(category: 2, boardId: 1),
+                            ),
+                          );
+                        },
                         isBlue: true,
                         width: percent > 0.3 ? 110.0 : 125.0,
                         height: percent > 0.3 ? 45.0 : 50.0,
