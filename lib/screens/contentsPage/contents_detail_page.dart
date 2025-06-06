@@ -1,3 +1,6 @@
+import 'package:festivalapp/auth/auth_http_client.dart';
+import 'package:provider/provider.dart';
+import 'package:festivalapp/auth/auth_provider.dart';
 import 'package:festivalapp/modules/base_layouts.dart';
 import 'package:festivalapp/modules/button_modules.dart';
 import 'package:festivalapp/modules/map_modules.dart';
@@ -7,6 +10,28 @@ import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+Future<Map<String, dynamic>> fetchContentsDetail(String id, AuthProvider authProvider, BuildContext context) async {
+  final url = Uri.parse('http://182.222.119.214:8081/api/contents/$id');
+  final client = AuthHttpClient(authProvider, context);
+  final request = http.Request('GET', url);
+  final streamedResponse = await client.send(request);
+  final response = await http.Response.fromStream(streamedResponse);
+
+  print('응답 코드: ${response.statusCode}');
+  print('응답 본문: ${response.body}');
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    final favorite = data['favorite'] ?? false;
+    final subCategoryId = data['subCategoryId'] ?? 1;
+    // You can return the data as is, since the consumer will extract subCategoryId from the map
+    return data;
+  } else {
+    return {};
+  }
+}
 
 class ContentsDetailPage extends StatelessWidget {
   final String contentsID;
@@ -19,7 +44,7 @@ class ContentsDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FlatScreen(
-      appBar : const Text(
+      appBar: const Text(
         "상세", // 추후에 id값에 맞는 제목으로 수정해야 함.
         style: TextStyle(
           fontSize: 18,
@@ -29,62 +54,137 @@ class ContentsDetailPage extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.only(top: 16),
-        child: CustomScrollView(
-          slivers: [
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _HeaderDelegate(expandedHeight: 220, contentsID: contentsID),
-            ),
-            SliverToBoxAdapter(
-              child: FutureBuilder<List<Map<String, String>>>(
-                future: fetchLinkTitles([
-                  "https://www.naver.com",
-                  "https://tickets.interpark.com",
-                ]),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return Center(child: Padding(
-                      padding: EdgeInsets.only(top: 32),
-                      child: CircularProgressIndicator(),
-                    ));
-                  }
-                  return ContentsBody(
-                    performers: [
-                      {'image': 'assets/images/event1.jpg', 'name': '10CM'},
-                      {'image': 'assets/images/event2.jpg', 'name': '싸이'},
-                      {'image': 'assets/images/event3.jpg', 'name': '콜드플레이'},
-                    ],
-                    siteLinks: snapshot.data,
-                    photoUrls: [
-                      "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F5906%2F2025%2F01%2F01%2F0000038280_004_20250223165015175.jpg&type=sc960_832",
-                      "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F5906%2F2025%2F01%2F01%2F0000038280_004_20250223165015175.jpg&type=sc960_832",
-                    ],
-                    dailyInfo: [
-                      {
-                        'booths': [
-                          {'location': 'A-1', 'description': '음식 부스'},
-                          {'location': 'B-3', 'description': '체험 부스'},
-                        ],
-                        'performers': [
-                          {'image': 'assets/images/event1.jpg', 'name': '10CM'},
-                          {'image': 'assets/images/event2.jpg', 'name': '싸이'},
-                        ]
-                      },
-                      {
-                        'booths': [
-                          {'location': 'C-2', 'description': '굿즈 판매'},
-                        ],
-                        'performers': [
-                          {'image': 'assets/images/event3.jpg', 'name': '콜드플레이'},
-                        ]
-                      },
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
+        child: FutureBuilder<Map<String, dynamic>>(
+          future: fetchContentsDetail(contentsID, context.read<AuthProvider>(), context),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return Center(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 32),
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+
+            final data = snapshot.data!;
+            final contentName = data['contentName'] ?? '';
+            final startDate = data['startDateTime']?.substring(0, 10) ?? '';
+            final endDate = data['endDateTime']?.substring(0, 10) ?? '';
+            final price = data['price'] ?? '';
+            final subjectNames = List<String>.from(data['subjectNames'] ?? []);
+            final subjectPerformers = subjectNames.map((name) => {'name': name, 'image': 'assets/images/event1.jpg'}).toList();
+            final performers = (data['performers'] as List<dynamic>?)
+                ?.map((e) => {
+                      'name': e['name']?.toString() ?? '',
+                      'image': e['image']?.toString() ?? 'assets/images/event1.jpg'
+                    })
+                .toList() ?? subjectPerformers;
+            // Updated siteLinks handling
+            final rawSiteLinks = data['siteLinks'];
+            List<Map<String, String>> siteLinks = [];
+            if (rawSiteLinks is List) {
+              siteLinks = rawSiteLinks.map((entry) {
+                if (entry is Map<String, dynamic>) {
+                  return {
+                    'title': entry['title']?.toString() ?? '링크',
+                    'url': entry['url']?.toString() ?? ''
+                  };
+                } else if (entry is String) {
+                  return {'title': '링크', 'url': entry};
+                } else {
+                  return {'title': '링크', 'url': ''};
+                }
+              }).toList();
+            }
+            final photoUrls = List<String>.from(data['imageUrls'] ?? []);
+            final address = data['address'] ?? '';
+            final headerImage = (photoUrls.isNotEmpty) ? photoUrls[0] : '';
+            final subject = data['subject'] ?? '';
+            final favoriteCount = data['favoriteCount'] ?? 0;
+            final favorite = data['favorite'] ?? false;
+            final subCategoryId = data['subCategoryId'] ?? 1;
+            debugPrint(headerImage);
+
+            return FutureBuilder<List<Map<String, dynamic>>>(
+              future: fetchSessions(contentsID, context.read<AuthProvider>(), context),
+              builder: (context, sessionSnapshot) {
+                final sessionInfo = sessionSnapshot.data ?? [];
+                return CustomScrollView(
+                  slivers: [
+                    _HeaderDelegatePlaceholder(
+                      contentName: contentName,
+                      startDate: startDate,
+                      endDate: endDate,
+                      price: price,
+                      contentsID: contentsID,
+                      headerImage: headerImage,
+                      subject: subject,
+                      favoriteCount: favoriteCount,
+                      isFavorited: favorite,
+                      subCategoryId: subCategoryId,
+                    ),
+                    SliverToBoxAdapter(
+                      child: ContentsBody(
+                        performers: performers,
+                        siteLinks: siteLinks,
+                        photoUrls: photoUrls,
+                        dailyInfo: sessionInfo,
+                        address: address,
+                        subject: subject,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
         ),
+      ),
+    );
+  }
+}
+
+class _HeaderDelegatePlaceholder extends StatelessWidget {
+  final String contentName;
+  final String startDate;
+  final String endDate;
+  final String price;
+  final String contentsID;
+  final String headerImage;
+  final String subject;
+  final int favoriteCount;
+  final bool isFavorited;
+  final int subCategoryId;
+
+  const _HeaderDelegatePlaceholder({
+    required this.contentName,
+    required this.startDate,
+    required this.endDate,
+    required this.price,
+    required this.contentsID,
+    required this.headerImage,
+    required this.subject,
+    required this.favoriteCount,
+    required this.isFavorited,
+    required this.subCategoryId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _HeaderDelegate(
+        expandedHeight: 220,
+        contentName: contentName,
+        startDate: startDate,
+        endDate: endDate,
+        price: price,
+        contentsID: contentsID,
+        headerImage: headerImage,
+        subject: subject,
+        favoriteCount: favoriteCount,
+        isFavorited: isFavorited,
+        subCategoryId: subCategoryId,
       ),
     );
   }
@@ -92,9 +192,30 @@ class ContentsDetailPage extends StatelessWidget {
 
 class _HeaderDelegate extends SliverPersistentHeaderDelegate {
   final double expandedHeight;
+  final String contentName;
+  final String startDate;
+  final String endDate;
+  final String price;
   final String contentsID;
+  final String headerImage;
+  final String subject;
+  final int favoriteCount;
+  final bool isFavorited;
+  final int subCategoryId;
 
-  _HeaderDelegate({required this.expandedHeight, required this.contentsID});
+  _HeaderDelegate({
+    required this.expandedHeight,
+    required this.contentName,
+    required this.startDate,
+    required this.endDate,
+    required this.price,
+    required this.contentsID,
+    required this.headerImage,
+    required this.subject,
+    required this.favoriteCount,
+    required this.isFavorited,
+    required this.subCategoryId,
+  });
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
@@ -111,7 +232,19 @@ class _HeaderDelegate extends SliverPersistentHeaderDelegate {
         ),
       ),
       padding: const EdgeInsets.all(0),
-      child: ContentsHeader(contentsID: contentsID, percent: percent),
+      child: ContentsHeader(
+        contentsID: contentsID,
+        percent: percent,
+        contentName: contentName,
+        startDate: startDate,
+        endDate: endDate,
+        price: price,
+        headerImage: headerImage,
+        subject: subject,
+        favoriteCount: favoriteCount,
+        isFavorited: isFavorited,
+        subCategoryId: subCategoryId,
+      ),
     );
   }
 
@@ -128,8 +261,30 @@ class _HeaderDelegate extends SliverPersistentHeaderDelegate {
 class ContentsHeader extends StatelessWidget {
   final String contentsID;
   final double percent;
+  final String contentName;
+  final String startDate;
+  final String endDate;
+  final String price;
+  final String headerImage;
+  final String subject;
+  final int favoriteCount;
+  final bool isFavorited;
+  final int subCategoryId;
 
-  const ContentsHeader({super.key, required this.contentsID, required this.percent});
+  const ContentsHeader({
+    super.key,
+    required this.contentsID,
+    required this.percent,
+    required this.contentName,
+    required this.startDate,
+    required this.endDate,
+    required this.price,
+    required this.headerImage,
+    required this.subject,
+    required this.favoriteCount,
+    required this.isFavorited,
+    required this.subCategoryId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -144,9 +299,13 @@ class ContentsHeader extends StatelessWidget {
           SizedBox(
             width: imageWidth,
             height: imageHeight,
-            child: Image.asset(
-              'assets/images/event1.jpg',
+            child: Image.network(
+              headerImage,
               fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                color: Colors.grey[300],
+                child: const Icon(Icons.broken_image, color: Colors.grey),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -159,14 +318,15 @@ class ContentsHeader extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       AutoSizeText(
-                        contentsID,
+                        contentName,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
-                        maxLines: 1,
-                        minFontSize: 12,
+                        maxLines: percent < 0.3 ? 3 : 2,
+                        minFontSize: 10,
                         overflow: TextOverflow.ellipsis,
+                        wrapWords: true,
                       ),
                       const SizedBox(height: 4),
                       Transform.scale(
@@ -187,7 +347,7 @@ class ContentsHeader extends StatelessWidget {
                                       style: TextStyle(color: Colors.grey, fontSize:12),
                                     ),
                                     Text(
-                                      "2025.05.27 09:00 ~",
+                                      startDate,
                                       style: TextStyle(fontSize: 12),
                                     )
                                   ]
@@ -196,7 +356,7 @@ class ContentsHeader extends StatelessWidget {
                                   children: [
                                     SizedBox(),
                                     Text(
-                                      "2025.05.29 23:00",
+                                      endDate,
                                       style: TextStyle(fontSize: 12),
                                     )
                                   ]
@@ -217,7 +377,7 @@ class ContentsHeader extends StatelessWidget {
                                         style: TextStyle(color: Colors.grey, fontSize:12),
                                       ),
                                       Text(
-                                        "무료 ~ 15,000원",
+                                        price,
                                         style: TextStyle(fontSize: 12),
                                       )
                                     ]
@@ -236,14 +396,19 @@ class ContentsHeader extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _FavoriteButton(percent: percent),
+                      _FavoriteButton(
+                        percent: percent,
+                        isFavorited: isFavorited,
+                        likeCount: favoriteCount,
+                        contentsID: contentsID,
+                      ),
                       GradientButton(
                         text: "게시판",
                         onPressed: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => ForumPage(category: 2, boardId: 1),
+                              builder: (_) => ForumPage(category: 2, boardId: subCategoryId),
                             ),
                           );
                         },
@@ -265,17 +430,33 @@ class ContentsHeader extends StatelessWidget {
 
 class _FavoriteButton extends StatefulWidget {
   final double percent;
-  const _FavoriteButton({super.key, required this.percent});
+  final bool isFavorited;
+  final int likeCount;
+  final String contentsID;
+  const _FavoriteButton({
+    super.key,
+    required this.percent,
+    required this.isFavorited,
+    required this.likeCount,
+    required this.contentsID,
+  });
 
   @override
   State<_FavoriteButton> createState() => _FavoriteButtonState();
 }
 
 class _FavoriteButtonState extends State<_FavoriteButton> {
-  bool isFavorited = false;
-  int likeCount = 123;
+  late bool isFavorited;
+  late int likeCount;
   double _iconScale = 1.0;
   final Duration _animationDuration = Duration(milliseconds: 100);
+
+  @override
+  void initState() {
+    super.initState();
+    isFavorited = widget.isFavorited;
+    likeCount = widget.likeCount;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -283,11 +464,9 @@ class _FavoriteButtonState extends State<_FavoriteButton> {
       mainAxisSize: MainAxisSize.min,
       children: [
         GestureDetector(
-          onTap: () {
+          onTap: () async {
             setState(() {
               _iconScale = 1.2;
-              isFavorited = !isFavorited;
-              likeCount += isFavorited ? 1 : -1;
             });
             Future.delayed(_animationDuration, () {
               if (mounted) {
@@ -296,6 +475,31 @@ class _FavoriteButtonState extends State<_FavoriteButton> {
                 });
               }
             });
+
+            final url = Uri.parse('http://182.222.119.214:8081/api/favorites/${widget.contentsID}');
+            final authProvider = context.read<AuthProvider>();
+            final client = AuthHttpClient(authProvider, context);
+            final request = http.Request('POST', url);
+            final streamedResponse = await client.send(request);
+            final response = await http.Response.fromStream(streamedResponse);
+
+            if (response.statusCode == 200) {
+              setState(() {
+                isFavorited = !isFavorited;
+                likeCount += isFavorited ? 1 : -1;
+              });
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(isFavorited ? '찜 추가되었습니다' : '찜 해제되었습니다'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('찜 기능 처리 중 오류가 발생했습니다.')),
+              );
+            }
           },
           child: AnimatedScale(
             scale: _iconScale,
@@ -328,12 +532,16 @@ class ContentsBody extends StatelessWidget {
   final List<Map<String, String>>? siteLinks;
   final List<String>? photoUrls;
   final List<Map<String, dynamic>>? dailyInfo;
+  final String address;
+  final String subject;
   const ContentsBody({
     super.key,
     required this.performers,
     this.siteLinks,
     this.photoUrls,
     this.dailyInfo,
+    required this.address,
+    required this.subject,
   });
 
   @override
@@ -348,49 +556,62 @@ class ContentsBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(width:double.infinity, child: TitleModules.title("기본 정보"),),
-            MapModules(address: '서울 중구 필동로1길 30',),
+            MapModules(address: address),
 
             Container(height: 0, decoration: BoxDecoration(border: Border.all(color: Colors.grey)),),
 
             Container(width:double.infinity, child: TitleModules.title("상세 정보"),),
-            Padding(
-              padding: const EdgeInsets.only(left: 18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "출연 연예인",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: performers
-                        .map((p) => Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: _PerformerBox(image: p['image']!, name: p['name']!),
-                            ))
-                        .toList(),
-                  ),
-                ],
+            if (performers.isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.only(left: 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "출연 연예인",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: performers
+                              .map((p) => Padding(
+                                    padding: const EdgeInsets.only(right: 8.0),
+                                    child: _PerformerBox(image: p['image']!, name: p['name']!),
+                                  ))
+                              .toList(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ],
             Padding(
               padding: EdgeInsets.fromLTRB(18, 16, 18, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     "행사 설명",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Container(
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(border: Border.all(color: Colors.grey), borderRadius: BorderRadius.circular(16)),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     child: Text(
-                      "이번 문화 축제는 다채로운 공연과 볼거리로 가득한 특별한 행사입니다. 국내외 인기 아티스트들의 무대와 다양한 푸드 부스, 체험 행사 등 모든 연령층이 즐길 수 있도록 준비되었습니다. 가족, 친구, 연인과 함께 소중한 추억을 만들어보세요.",
-                      style: TextStyle(fontSize: 12, height: 1.5, color: Colors.black87),
+                      subject,
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(fontSize: 12, height: 1.5, color: Colors.black87),
                     ),
                   ),
                 ],
@@ -432,27 +653,54 @@ class ContentsBody extends StatelessWidget {
               ),
             ],
 
-            Column(
-              children: [
-                SizedBox(height:32),
-                Container(height: 0, decoration: BoxDecoration(border: Border.all(color: Colors.grey)),),
-                Container(width:double.infinity, child: TitleModules.title("일자별 정보"),),
+            if ((dailyInfo?.isNotEmpty ?? false)) ...[
+              Column(
+                children: [
+                  SizedBox(height:32),
+                  Container(height: 0, decoration: BoxDecoration(border: Border.all(color: Colors.grey)),),
+                  Container(width:double.infinity, child: TitleModules.title("일자별 정보"),),
+                ],
+              ),
+
+              // 행사 사진 영역
+              if (photoUrls != null && photoUrls!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _PhotoCarousel(photoUrls: photoUrls!),
               ],
-            ),
 
-            // 행사 사진 영역
-            if (photoUrls != null && photoUrls!.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              _PhotoCarousel(photoUrls: photoUrls!),
-            ],
-
-            // 일차별 상세 정보
-            if (dailyInfo != null && dailyInfo!.isNotEmpty) ...[
+              // 일차별 상세 정보
               const SizedBox(height: 24),
               ...List.generate(dailyInfo!.length, (index) {
                 final info = dailyInfo![index];
-                final booths = info['booths'] as List<Map<String, String>>;
-                final performers = info['performers'] as List<Map<String, String>>;
+                final booths = (info['booths'] as List?)?.map((b) => {'booth': b.toString()}).toList() ?? [];
+                final performers = (info['performers'] as List?)
+                    ?.map((e) {
+                      if (e is Map<String, dynamic>) {
+                        return {
+                          'name': e['name']?.toString() ?? '',
+                          'image': e['image']?.toString() ?? 'assets/images/event1.jpg',
+                        };
+                      } else if (e is String) {
+                        return {
+                          'name': e,
+                          'image': 'assets/images/event1.jpg',
+                        };
+                      }
+                      return {
+                        'name': '',
+                        'image': 'assets/images/event1.jpg',
+                      };
+                    })
+                    .cast<Map<String, String>>()
+                    .toList()
+                    ??
+                    (info['artistNames'] as List?)?.map((name) {
+                      return {
+                        'name': name.toString(),
+                        'image': 'assets/images/event1.jpg',
+                      };
+                    }).cast<Map<String, String>>().toList()
+                    ?? [];
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 24),
@@ -487,10 +735,6 @@ class ContentsBody extends StatelessWidget {
                               children: const [
                                 Padding(
                                   padding: EdgeInsets.all(8.0),
-                                  child: Text("위치", style: TextStyle(fontWeight: FontWeight.bold)),
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.all(8.0),
                                   child: Text("부스 정보", style: TextStyle(fontWeight: FontWeight.bold)),
                                 ),
                               ],
@@ -499,11 +743,7 @@ class ContentsBody extends StatelessWidget {
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.all(8.0),
-                                  child: Text(b['location'] ?? ''),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(b['description'] ?? ''),
+                                  child: Text(b['booth'] ?? ''),
                                 ),
                               ],
                             )),
@@ -511,17 +751,22 @@ class ContentsBody extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                        child: const Text(
-                          "출연 연예인",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 18.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "출연 연예인",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: performers
                               .map((p) => Padding(
                                     padding: const EdgeInsets.only(right: 8.0),
@@ -530,6 +775,10 @@ class ContentsBody extends StatelessWidget {
                               .toList(),
                         ),
                       ),
+                    ),
+                  ],
+                ),
+              ),
                     ],
                   ),
                 );
@@ -557,11 +806,17 @@ class _PerformerBox extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: Image.asset(
+          child: Image.network(
             image,
             width: 70,
             height: 70,
             fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              color: Colors.grey[300],
+              width: 70,
+              height: 70,
+              child: Icon(Icons.broken_image, color: Colors.grey),
+            ),
           ),
         ),
         SizedBox(height: 4),
@@ -668,5 +923,22 @@ class _PhotoCarouselState extends State<_PhotoCarousel> {
         ),
       ],
     );
+  }
+}
+// Helper function to fetch sessions
+Future<List<Map<String, dynamic>>> fetchSessions(String contentsID, AuthProvider authProvider, BuildContext context) async {
+  final sessionsUrl = Uri.parse('http://182.222.119.214:8081/api/contents/$contentsID/sessions');
+  final sessionsClient = AuthHttpClient(authProvider, context);
+  final sessionsRequest = http.Request('GET', sessionsUrl);
+  final sessionsStreamedResponse = await sessionsClient.send(sessionsRequest);
+  final sessionsResponse = await http.Response.fromStream(sessionsStreamedResponse);
+
+  print('세션 응답 코드: ${sessionsResponse.statusCode}');
+  print('세션 응답 본문: ${sessionsResponse.body}');
+
+  if (sessionsResponse.statusCode == 200) {
+    return List<Map<String, dynamic>>.from(jsonDecode(sessionsResponse.body));
+  } else {
+    return [];
   }
 }

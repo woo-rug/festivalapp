@@ -55,7 +55,6 @@ class MyApp extends StatelessWidget {
           ],
         ),
         '/map' : (context) => PostcodePage(),
-        '/additional' : (context) => RegisterAdditionalPage(),
       }
       // home: PageIndexer(
       //   pages: const [

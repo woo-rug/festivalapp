@@ -1,3 +1,8 @@
+import 'dart:convert';
+import 'package:festivalapp/auth/auth_provider.dart';
+import 'package:festivalapp/auth/auth_service.dart';
+import 'package:http/http.dart' as http;
+import 'package:festivalapp/auth/auth_http_client.dart';
 import 'package:festivalapp/modules/base_layouts.dart';
 import 'package:flutter/material.dart';
 
@@ -17,11 +22,78 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
   int _likeCount = 12;
   int _commentCount = 5;
   bool _isMine = true;
+  Map<String, dynamic>? _postData;
+  List<Map<String, dynamic>> _comments = [];
 
   @override
   void initState() {
     super.initState();
     _fetchOwnership();
+    _fetchPostDetail();
+    _fetchComments();
+  }
+  void _fetchComments() async {
+    final String? accessToken = await AuthService().getAccessToken();
+    final uri = Uri.parse('http://182.222.119.214:8081/api/comments/${widget.postId}/comments');
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+    );
+
+    debugPrint('GET /api/comments/${widget.postId}/comments 응답 코드: ${response.statusCode}');
+    if (response.statusCode == 200) {
+      try {
+        final decoded = jsonDecode(response.body);
+        debugPrint('댓글 응답 본문: $decoded');
+        for (var comment in decoded) {
+          debugPrint('댓글 작성자: ${comment['memberName']}, 내용: ${comment['commentContent']}');
+        }
+        setState(() {
+          _comments = List<Map<String, dynamic>>.from(decoded);
+        });
+      } catch (e) {
+        debugPrint('댓글 JSON 디코딩 오류: $e');
+      }
+    } else {
+      debugPrint('댓글 서버 응답 오류: ${response.body}');
+    }
+  }
+
+  void _fetchPostDetail() async {
+    final String? accessToken = await AuthService().getAccessToken();
+
+    final uri = Uri.parse('http://182.222.119.214:8081/api/articles/${widget.postId}');
+    final response = await http.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+    );
+    debugPrint('GET /api/articles/${widget.postId} 응답 코드: ${response.statusCode}');
+    if (response.statusCode == 200) {
+      try {
+        final decoded = jsonDecode(response.body);
+        debugPrint('응답 본문: $decoded');
+        setState(() {
+          _postData = {
+            'title': decoded['title'],
+            'createDate': decoded['createDate'],
+            'body': decoded['body'],
+            'likeCount': decoded['likeCount'],
+            'commentCount': decoded['commentCount'],
+          };
+        });
+      } catch (e) {
+        debugPrint('JSON 디코딩 오류: $e');
+      }
+    } else {
+      debugPrint('서버 응답 오류: ${response.body}');
+    }
   }
 
   void _fetchOwnership() async {
@@ -41,6 +113,13 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final title = _postData?['title'] ?? '제목 없음';
+    final dateTime = _postData?['createDate']?.toString() ?? '날짜 없음';
+    final body = _postData?['body'] ?? '내용 없음';
+    final likeCount = _postData?['likeCount'] ?? 0;
+    final commentCount = _postData?['commentCount'] ?? 0;
+    _likeCount = likeCount;
+    _commentCount = commentCount;
     return FlatScreen(
       appBar: Text(
         "게시글 상세",
@@ -59,7 +138,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
             Padding(
               padding: const EdgeInsets.fromLTRB(0, 4.0, 0, 4.0),
               child: Text(
-                '게시글 제목 예시',
+                title,
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
               ),
             ),
@@ -67,7 +146,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 4.0),
               child: Text(
-                '2024-06-01 12:34',
+                dateTime,
                 style: const TextStyle(fontSize: 14, color: Colors.grey),
               ),
             ),
@@ -75,7 +154,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
             Padding(
               padding: const EdgeInsets.fromLTRB(0, 4.0, 0, 16.0),
               child: Text(
-                '여기에 게시글 본문이 표시됩니다.\npostId: ${widget.postId}',
+                body,
                 style: const TextStyle(fontSize: 16),
               ),
             ),
@@ -156,9 +235,31 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.send),
-                        onPressed: () {
-                          print('댓글 입력: ${_commentController.text}');
-                          _commentController.clear();
+                        onPressed: () async {
+                          final String commentText = _commentController.text.trim();
+                          if (commentText.isEmpty) return;
+
+                          final String? accessToken = await AuthService().getAccessToken();
+                          final uri = Uri.parse('http://182.222.119.214:8081/api/comments/${widget.postId}/comments');
+
+                          final response = await http.post(
+                            uri,
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': 'Bearer $accessToken',
+                            },
+                            body: jsonEncode({'commentContent': commentText}),
+                          );
+
+                          debugPrint('POST /api/comments 응답 코드: ${response.statusCode}');
+                          debugPrint('POST /api/comments 응답 본문: ${response.body}');
+
+                          if (response.statusCode == 200 || response.statusCode == 201) {
+                            _commentController.clear();
+                            _fetchComments();
+                          } else {
+                            debugPrint('댓글 전송 실패');
+                          }
                         },
                       ),
                     ],
@@ -167,16 +268,22 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
               ),
               const SizedBox(height: 8),
               Expanded(
-                child: ListView.builder(
-                  itemCount: 5, // 예시로 댓글 5개
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const CircleAvatar(child: Icon(Icons.person)),
-                      title: Text('사용자 ${index + 1}'),
-                      subtitle: const Text('댓글 내용입니다.'),
-                    );
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    _fetchComments();
                   },
+                  child: ListView.builder(
+                    itemCount: _comments.length,
+                    itemBuilder: (context, index) {
+                      final comment = _comments[index];
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const CircleAvatar(child: Icon(Icons.person)),
+                        title: Text(comment['memberName'] ?? '익명'),
+                        subtitle: Text(comment['commentContent'] ?? ''),
+                      );
+                    },
+                  ),
                 ),
               ),
             ]

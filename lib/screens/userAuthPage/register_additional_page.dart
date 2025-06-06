@@ -9,7 +9,10 @@ import 'package:flutter/material.dart';
 import 'register_result_page.dart';
 
 class RegisterAdditionalPage extends StatefulWidget {
-  const RegisterAdditionalPage({super.key});
+  final String name;
+  final String username;
+
+  const RegisterAdditionalPage({super.key, required this.name, required this.username});
 
   @override
   State<RegisterAdditionalPage> createState() => _RegisterAdditionalPageState();
@@ -47,7 +50,7 @@ class _RegisterAdditionalPageState extends State<RegisterAdditionalPage> {
 
           AdditionalInfoSection(
             key: _sectionKey,
-            userName: "홍길동",
+            userName: widget.name,
             onAnswerComplete: (value) => setState(() => isComplete = value),
           ),
           SizedBox(height: 16),

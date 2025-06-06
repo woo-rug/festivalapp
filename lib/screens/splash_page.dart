@@ -25,7 +25,7 @@ class _SplashPageState extends State<SplashPage> {
     final accessToken = await _authService.getAccessToken();
 
     if (shouldKeepLogin && accessToken != null && accessToken.isNotEmpty) {
-      authProvider.getValidAccessToken(context);
+      await authProvider.refreshToken();
       Navigator.pushReplacementNamed(context, '/main');
     } else {
       Navigator.pushReplacementNamed(context, '/login');

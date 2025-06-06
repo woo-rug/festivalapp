@@ -45,10 +45,9 @@ class _MapModulesState extends State<MapModules> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
-            debugPrint('📌 시작된 페이지 주소: $url, lat : $lat, lng : $lng');
+            debugPrint('lat : $lat, lng : $lng');
           },
           onPageFinished: (url) {
-            debugPrint('✅ 로딩 완료된 페이지 주소: $url');
             isPageLoaded = true;
             _maybeRunJS();
           },
@@ -65,8 +64,9 @@ class _MapModulesState extends State<MapModules> {
       url,
       headers: {'Authorization': 'KakaoAK d61e078952efa1d181763445c7233eae'},
     );
-    debugPrint('응답 바디: ${response.body}');
-    debugPrint('응답 헤더: ${response.headers}');
+    debugPrint('지도 주소 : ${widget.address}');
+    debugPrint('지도 응답 바디: ${response.body}');
+    debugPrint('지도 응답 헤더: ${response.headers}');
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       if (data['documents'] != null && data['documents'].isNotEmpty) {

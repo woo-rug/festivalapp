@@ -1,41 +1,51 @@
 import 'package:festivalapp/modules/base_layouts.dart';
+import 'package:festivalapp/screens/contentsPage/contents_detail_page.dart';
+import 'package:festivalapp/screens/contentsPage/forum_page.dart';
+import 'package:festivalapp/screens/contentsPage/my_pick_page.dart';
 import 'package:festivalapp/screens/userAuthPage/check_PW_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return FlatScreen(
-      appBar: const Text(
-        "프로필",
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
-        ),
-      ),
-      body: Navigator(
-        onGenerateRoute: (settings) {
+    return Navigator(
+      onGenerateRoute: (settings) {
+        if (settings.name == '/detail') {
+          final String contentsID = settings.arguments as String;
           return MaterialPageRoute(
-            builder: (_) => _ProfileHome(),
+            builder: (_) => ContentsDetailPage(contentsID: contentsID),
           );
-        },
-      ),
+        }
+        return MaterialPageRoute(
+          builder: (_) => FlatScreen(
+            appBar: const Text(
+              "프로필",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+            body: ProfileHomeBody(),
+          ),
+        );
+      },
     );
   }
 }
 
-class _ProfileHome extends StatefulWidget {
+class ProfileHomeBody extends StatefulWidget {
   @override
-  State<_ProfileHome> createState() => _ProfileHomeState();
+  State<ProfileHomeBody> createState() => _ProfileHomeState();
 }
 
-class _ProfileHomeState extends State<_ProfileHome> {
+class _ProfileHomeState extends State<ProfileHomeBody> {
   Map<String, dynamic>? _userData;
 
   @override
@@ -190,8 +200,26 @@ class _ProfileHomeState extends State<_ProfileHome> {
                   collapsedShape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide.none),
                   shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide.none),
                   children: [
-                    ListTile(title: const Text("내가 쓴 글", style:TextStyle(fontSize: 14)), onTap: () {}),
-                    ListTile(title: const Text("찜한 행사", style:TextStyle(fontSize: 14)), onTap: () {}),
+                    ListTile(
+                      title: const Text("내가 쓴 글", style: TextStyle(fontSize: 14)),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ForumPage(category: 1, boardId: 0),
+                          ),
+                        );
+                      },
+                    ),
+                    ListTile(
+                      title: const Text("찜한 행사", style: TextStyle(fontSize: 14)),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => MyPickPage(),
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -209,8 +237,36 @@ class _ProfileHomeState extends State<_ProfileHome> {
                   collapsedShape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide.none),
                   shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide.none),
                   children: [
-                    ListTile(title: const Text("공지사항", style:TextStyle(fontSize: 14)), onTap: () {}),
-                    ListTile(title: const Text("1:1 이메일 문의", style:TextStyle(fontSize: 14)), onTap: () {}),
+                    ListTile(
+                      title: const Text("공지사항", style: TextStyle(fontSize: 14)),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ForumPage(category: 0, boardId: 0),
+                          ),
+                        );
+                      },
+                    ),
+                    ListTile(
+                      title: const Text("1:1 이메일 문의", style: TextStyle(fontSize: 14)),
+                      onTap: () async {
+                        final Uri emailLaunchUri = Uri(
+                          scheme: 'mailto',
+                          path: 'support@example.com',
+                          queryParameters: {
+                            'subject': '1:1 문의',
+                            'body': '문의 내용을 작성해주세요.'
+                          },
+                        );
+                        if (await canLaunchUrl(emailLaunchUri)) {
+                          await launchUrl(emailLaunchUri);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('이메일 앱을 열 수 없습니다.')),
+                          );
+                        }
+                      },
+                    ),
                     ListTile(title: const Text("행사 정보 추가 요청", style:TextStyle(fontSize: 14)), onTap: () {}),
                   ],
                 ),

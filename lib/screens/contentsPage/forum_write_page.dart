@@ -1,6 +1,11 @@
+import 'dart:convert';
+import 'package:festivalapp/auth/auth_provider.dart';
+import 'package:http/http.dart';
+import 'package:festivalapp/auth/auth_http_client.dart';
 import 'package:festivalapp/modules/button_modules.dart';
 import 'package:flutter/material.dart';
 import 'package:festivalapp/modules/base_layouts.dart';
+late final AuthProvider _authProvider = AuthProvider();
 
 class ForumWritePage extends StatefulWidget {
   final int boardId;
@@ -13,6 +18,11 @@ class ForumWritePage extends StatefulWidget {
 class _ForumWritePageState extends State<ForumWritePage> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -103,7 +113,55 @@ class _ForumWritePageState extends State<ForumWritePage> {
               child: GradientButton(
                 height: 55,
                 text: "게시", 
-                onPressed: () {}, 
+                onPressed: () async {
+                  final title = _titleController.text.trim();
+                  final content = _contentController.text.trim();
+
+                  if (title.isEmpty || content.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("제목과 내용을 모두 입력해주세요.")),
+                    );
+                    return;
+                  }
+
+                  try {
+                    final uri = Uri.parse("http://182.222.119.214:8081/api/articles/");
+                    final response = await AuthHttpClient(_authProvider, context).send(
+                      Request(
+                        "POST",
+                        uri,
+                      )..headers.addAll({
+                          "Content-Type": "application/json",
+                        })..body = jsonEncode({
+                          "title": title,
+                          "body": content,
+                          "subCategoryId": widget.boardId,
+                          "category": "FREE"
+                        }),
+                    );
+
+                    final statusCode = response.statusCode;
+                    final responseBody = await response.stream.bytesToString();
+                    print("게시글 작성 응답 코드: $statusCode");
+                    print("게시글 작성 응답 본문: $responseBody");
+
+                    if (statusCode == 201) {
+                      Navigator.of(context).pop(true);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("게시글이 성공적으로 작성되었습니다.")),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("게시글 작성에 실패했습니다.")),
+                      );
+                    }
+                  } catch (e) {
+                    print("게시글 작성 오류: $e");
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("네트워크 오류가 발생했습니다.")),
+                    );
+                  }
+                },
                 isBlue: true)
             )
           ],

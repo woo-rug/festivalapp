@@ -19,9 +19,9 @@ class AuthHttpClient extends http.BaseClient {
 
     var response = await _inner.send(request);
 
-    if (response.statusCode == 401 &&
-        !request.url.path.contains('/api/members/profile/verify')) {
-      final newToken = await authProvider.getValidAccessToken(context);
+    if (response.statusCode == 403 &&
+        !request.url.path.contains('/api/members/reissue')) {
+      final newToken = await authProvider.refreshToken();
       if (newToken != null) {
         request.headers['Authorization'] = 'Bearer $newToken';
         response = await _inner.send(request);
