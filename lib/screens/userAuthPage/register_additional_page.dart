@@ -71,12 +71,25 @@ class _RegisterAdditionalPageState extends State<RegisterAdditionalPage> {
                   };
                 }).toList();
 
-                try {
-                  final response = await http.post(
+               try {
+                  print('Sending data: ${jsonEncode({
+                    'username': widget.username,
+                    'keyword1': selectedAnswers?[0]['answer'],
+                    'keyword2': selectedAnswers?[1]['answer'],
+                    'keyword3': selectedAnswers?[2]['answer']
+                  })}');
+                  final response = await http.patch(
                     Uri.parse('http://182.222.119.214:8081/api/members/keywords'),
                     headers: {'Content-Type': 'application/json'},
-                    body: jsonEncode({'answers': selectedAnswers}),
+                    body: jsonEncode({
+                      'username': widget.username,
+                      'keyword1': selectedAnswers?[0]['answer'],
+                      'keyword2': selectedAnswers?[1]['answer'],
+                      'keyword3': selectedAnswers?[2]['answer']
+                    }),
                   );
+                  print('Response status: ${response.statusCode}');
+                  print('Response body: ${response.body}');
 
                   if (response.statusCode == 200 || response.statusCode == 204) {
                     Navigator.push(
@@ -134,20 +147,26 @@ class _AdditionalInfoSectionState extends State<AdditionalInfoSection> {
   int currentPage = 0;
   List<int?> selectedIndexes = [null, null, null];
 
-  final List<Map<String, dynamic>> questions = [
-    {
-      "text": "1. 어떤 공간에서 여가를 즐기는 걸 더 선호하시나요?",
-      "options": ["야외", "실내"],
-    },
-    {
-      "text": "2. {}님은 여가 시간에 어떤 스타일로 활동하길 원하시나요?",
-      "options": ["감성적", "활동적", "정적"],
-    },
-    {
-      "text": "3. {}님이 좋아하는 분위기나 요소를 하나만 골라주세요.",
-      "options": ["자연", "음악", "예술", "조용함", "열정적", "운동", "쇼핑", "북적임", "독서"],
-    }
-  ];
+  late final List<Map<String, dynamic>> questions;
+
+  @override
+  void initState() {
+    super.initState();
+    questions = [
+      {
+        "text": "1. 어떤 공간에서 여가를 즐기는 걸 더 선호하시나요?",
+        "options": ["야외", "실내"],
+      },
+      {
+        "text": "2. ${widget.userName}님은 여가 시간에 어떤 스타일로 활동하길 원하시나요?",
+        "options": ["감성적", "활동적", "정적"],
+      },
+      {
+        "text": "3. ${widget.userName}님이 좋아하는 분위기나 요소를 하나만 골라주세요.",
+        "options": ["자연", "음악", "예술", "조용함", "열정적", "운동", "쇼핑", "북적임", "독서"],
+      },
+    ];
+  }
 
   void _checkCompletion() {
     bool complete = selectedIndexes.every((element) => element != null);
