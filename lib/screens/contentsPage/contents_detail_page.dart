@@ -568,7 +568,9 @@ class ContentsBody extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "출연 연예인",
+                      subject.contains("축구") || subject.contains("야구") || subject.contains("농구")
+                          ? "경기 팀"
+                          : (subject.contains("음식") || subject.contains("패션") || subject.contains("뷰티") ? "브랜드" : "출연 연예인"),
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     SizedBox(height: 8),
@@ -756,8 +758,10 @@ class ContentsBody extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "출연 연예인",
+                    Text(
+                      subject.contains("축구") || subject.contains("야구") || subject.contains("농구")
+                          ? "경기 팀"
+                          : (subject.contains("음식") || subject.contains("패션") || subject.contains("뷰티") ? "브랜드" : "출연 연예인"),
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),

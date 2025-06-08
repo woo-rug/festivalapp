@@ -6,6 +6,9 @@ import 'package:festivalapp/screens/contentsPage/contents_detail_page.dart';
 import 'package:festivalapp/screens/contentsPage/forum_page.dart';
 import 'package:festivalapp/screens/contentsPage/my_pick_page.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class MainPage extends StatelessWidget {
   const MainPage({super.key});
@@ -22,21 +25,27 @@ class MainPage extends StatelessWidget {
         }
         return MaterialPageRoute(
           builder: (_) => FlatScreen(
-            appBarHeight: 80,
-            appBar: Container(
-              height: 60,
-              width: 60,
-              color: Colors.grey,
-              child: Center(
-                child: Text(
-                  "아이콘",
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w100,
-                    color: Colors.black,
+            appBarHeight: 75,
+            appBar: Row(
+              children: [
+                Container(
+                  height: 55,
+                  width: 55,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.all(Radius.circular(15)),
+                  ),
+                  child: Center(
+                    child: Image.asset(
+                      'assets/images/cullect_icon_transparent.png',
+                      height: 55,
+                      width: 55,
+                    ),
                   ),
                 ),
-              ),
+                SizedBox(width:16),
+                _AnimatedTaglineSwitcher()
+              ],
             ),
             body: _MainPageBody(),
           ),
@@ -138,52 +147,72 @@ class _MainPageBody extends StatelessWidget {
           ],
         ),
         TitleModules.title("AI가 추천하는 문화생활"),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(alignment:Alignment.centerLeft, padding: EdgeInsets.fromLTRB(24, 4, 0, 8), child: Text("사용자 기반 추천 문화생활", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),),),
-            LeftAlignedSnapSlider(
-              items: [
-                RecommandResultButton(
-                  imagePath: 'assets/images/ai_recommend1.jpg',
-                  title: 'AI 추천 문화생활 1',
-                  dateRange: '2025.01.01 ~ 01.10',
-                ),
-                RecommandResultButton(
-                  imagePath: 'assets/images/ai_recommend2.jpg',
-                  title: 'AI 추천 문화생활 2',
-                  dateRange: '2025.01.01 ~ 01.10',
-                ),
-                RecommandResultButton(
-                  imagePath: 'assets/images/ai_recommend3.jpg',
-                  title: 'AI 추천 문화생활 3',
-                  dateRange: '2025.01.01 ~ 01.10',
-                ),
-              ],
-            ),
+        FutureBuilder<http.Response>(
+          future: () async {
+            final storage = FlutterSecureStorage();
+            final token = await storage.read(key: 'accessToken') ?? '';
+            return await http.get(
+              Uri.parse('http://182.222.119.214:8081/api/recommend'),
+              headers: {
+                'Authorization': 'Bearer $token',
+              },
+            );
+          }(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError || !snapshot.hasData) {
+              return const Center(child: Text('추천 정보를 불러오지 못했습니다.'));
+            }
 
-            Container(alignment:Alignment.centerLeft, padding: EdgeInsets.fromLTRB(24, 36, 0, 8), child: Text("비슷한 사용자 기반 추천 문화생활", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),),),
-            LeftAlignedSnapSlider(
-              items: [
-                RecommandResultButton(
-                  imagePath: 'assets/images/ai_recommend1.jpg',
-                  title: 'AI 추천 문화생활 1',
-                  dateRange: '2025.01.01 ~ 01.10',
+            final Map<String, dynamic> responseData = json.decode(snapshot.data!.body);
+            final List<dynamic> recommends = responseData['data'] ?? [];
+            print('추천 데이터: $recommends');
+
+            if (recommends.length < 6) {
+              return const Center(child: Text('추천할 문화생활을 찾고 있어요! 찾기 완료되면 추천해드릴게요.'));
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.fromLTRB(24, 4, 0, 8),
+                  child: const Text(
+                    "사용자 기반 추천 문화생활",
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
                 ),
-                RecommandResultButton(
-                  imagePath: 'assets/images/ai_recommend2.jpg',
-                  title: 'AI 추천 문화생활 2',
-                  dateRange: '2025.01.01 ~ 01.10',
+                LeftAlignedSnapSlider(
+                  items: recommends.sublist(0, 3).map((item) {
+                    return RecommandResultButton(
+                      imagePath: item['imagePath'],
+                      title: item['title'],
+                      dateRange: item['dateRange'],
+                    );
+                  }).toList(),
                 ),
-                RecommandResultButton(
-                  imagePath: 'assets/images/ai_recommend3.jpg',
-                  title: 'AI 추천 문화생활 3',
-                  dateRange: '2025.01.01 ~ 01.10',
+                Container(
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.fromLTRB(24, 36, 0, 8),
+                  child: const Text(
+                    "비슷한 사용자 기반 추천 문화생활",
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                LeftAlignedSnapSlider(
+                  items: recommends.sublist(3, 6).map((item) {
+                    return RecommandResultButton(
+                      imagePath: item['imagePath'],
+                      title: item['title'],
+                      dateRange: item['dateRange'],
+                    );
+                  }).toList(),
                 ),
               ],
-            ),
-          ],
+            );
+          },
         ),
         SizedBox(height:120),
       ],
@@ -344,6 +373,64 @@ class _CardSliderWithStaticDotsState extends State<CardSliderWithStaticDots> {
             }),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AnimatedTaglineSwitcher extends StatefulWidget {
+  @override
+  State<_AnimatedTaglineSwitcher> createState() => _AnimatedTaglineSwitcherState();
+}
+
+class _AnimatedTaglineSwitcherState extends State<_AnimatedTaglineSwitcher> {
+  int _currentIndex = 0;
+  final List<String> _taglines = ['문화를 고르다.', '문화를 모으다.', 'Cullect'];
+
+  @override
+  void initState() {
+    super.initState();
+    _runSequence();
+  }
+
+  void _runSequence() async {
+    while (mounted) {
+      await Future.delayed(Duration(seconds: _currentIndex == 2 ? 8 : 2));
+      if (!mounted) return;
+      setState(() {
+        _currentIndex = (_currentIndex + 1) % _taglines.length;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 30,
+      child: Stack(
+        alignment: Alignment.centerLeft,
+        children: List.generate(_taglines.length, (index) {
+          final isCurrent = _currentIndex == index;
+          return AnimatedSlide(
+            offset: isCurrent ? Offset(0, 0) : Offset(0, 1),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+            child: Visibility(
+              visible: isCurrent,
+              maintainState: true,
+              maintainAnimation: true,
+              maintainSize: true,
+              child: Text(
+                _taglines[index],
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          );
+        }),
       ),
     );
   }

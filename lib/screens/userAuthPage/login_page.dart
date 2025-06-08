@@ -52,15 +52,24 @@ class _LoginPageState extends State<LoginPage> {
     return CurveScreen(
       title: Column(
         children: [
-          Container(
-            height: 60,
-            width: 60,
-            decoration: const BoxDecoration(
-              color: Colors.grey,
-            ),
-            child: const Center(
-              child: Text("아이콘", style: TextStyle(color: Colors.black, fontSize: 12)),
-            ),
+          Column(
+            children: [
+              Container(
+                height: 80,
+                width: 80,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.all(Radius.circular(15)),
+                ),
+                child: Center(
+                  child: Image.asset(
+                    'assets/images/cullect_icon_transparent.png',
+                    height: 80,
+                    width: 80,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 0),
           const Text(
@@ -127,7 +136,6 @@ class _LoginPageState extends State<LoginPage> {
               onPressed: _login,
               isBlue: true,
               text: '로그인',
-              height:60,
             ),
             const SizedBox(height: 8),
             GradientButton(
@@ -141,7 +149,6 @@ class _LoginPageState extends State<LoginPage> {
               },
               isBlue: false,
               text: '회원가입',
-              height:60,
             ),
             const SizedBox(height: 8),
             TextButton(

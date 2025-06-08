@@ -52,9 +52,23 @@ class _MyPickPageState extends State<MyPickPage> {
           color: Colors.white,
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: _fetchFavorites,
-        child: ListView.builder(
+      body: _favoriteList.isEmpty
+          ? const Padding(
+              padding: EdgeInsets.only(top: 300),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    '찜한 행사가 없습니다.',
+                    style: TextStyle(fontSize: 16, color: Colors.black54),
+                  ),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: _fetchFavorites,
+              child: ListView.builder(
           padding: const EdgeInsets.all(24),
           itemCount: _favoriteList.length,
           itemBuilder: (context, index) {

@@ -73,7 +73,7 @@ class _ForumPageState extends State<ForumPage> {
         });
       }
     } else {
-      final uri = Uri.parse('http://182.222.119.214:8081/api/articles/${widget.boardId}');
+      final uri = Uri.parse('http://182.222.119.214:8081/api/articles/${widget.boardId}/search');
       final response = await http.get(
         uri,
         headers: {
@@ -127,7 +127,17 @@ class _ForumPageState extends State<ForumPage> {
         padding: EdgeInsets.only(top: 16),
         child: RefreshIndicator(
           onRefresh: fetchForums,
-          child: ListView.builder(
+          child: forums.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 150),
+                    child: Text(
+                      '게시글이 없습니다.',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ),
+                )
+              : ListView.builder(
             itemCount: forums.length,
             itemBuilder: (context, index) {
               final forum = forums[index];

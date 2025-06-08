@@ -57,19 +57,35 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   void _checkNicknameDuplicate() async {
-    // 서버 중복 확인 로직 예시 (추후 실제 API 연동)
     final nickname = nicknameController.text.trim();
-    if (nickname == "takenNickname") {
-      setState(() {
-        isNicknameChecked = false;
-        nicknameCheckResult = "❌ 이미 사용 중인 닉네임입니다.";
-      });
-    } else {
+    if (nickname.isEmpty) return;
+
+    final accessToken = await const FlutterSecureStorage().read(key: 'accessToken');
+    final response = await http.post(
+      Uri.parse('http://182.222.119.214:8081/api/members/join/verify-nickname'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+      body: jsonEncode({'nickname': nickname}),
+    );
+
+    if (response.statusCode == 200) {
       setState(() {
         isNicknameChecked = true;
         nicknameCheckResult = "✅ 사용 가능한 닉네임입니다.";
       });
+    } else {
+      final decoded = jsonDecode(response.body);
+      setState(() {
+        isNicknameChecked = false;
+        nicknameCheckResult = "❌ " + decoded['message'];
+      });
+      print("닉네임 중복 검증 오류: ${decoded['message']}");
+      print('응답 코드: ${response.statusCode}');
+      print('응답 바디: ${response.body}');
     }
+
     _checkFormValid();
   }
 
@@ -255,6 +271,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     'Authorization': 'Bearer $accessToken',
                   },
                   body: jsonEncode({
+                    'username': idController.text,
                     'name': nameController.text,
                     'nickname': nicknameController.text,
                     'email' : emailController.text,

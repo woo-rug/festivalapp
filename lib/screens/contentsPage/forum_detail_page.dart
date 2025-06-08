@@ -24,14 +24,36 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
   bool _isMine = true;
   Map<String, dynamic>? _postData;
   List<Map<String, dynamic>> _comments = [];
+  String? _userId;
 
   @override
   void initState() {
     super.initState();
+    _fetchUserId();
     _fetchOwnership();
     _fetchPostDetail();
     _fetchComments();
   }
+
+  void _fetchUserId() async {
+    final String? accessToken = await AuthService().getAccessToken();
+    final uri = Uri.parse('http://182.222.119.214:8081/api/members/profile/me');
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+      },
+    );
+
+    final decoded = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      setState(() {
+        _userId = decoded['nickname']?.toString();
+      });
+    }
+  }
+
   void _fetchComments() async {
     final String? accessToken = await AuthService().getAccessToken();
     final uri = Uri.parse('http://182.222.119.214:8081/api/comments/${widget.postId}/comments');
@@ -53,7 +75,14 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
           debugPrint('댓글 작성자: ${comment['memberName']}, 내용: ${comment['commentContent']}');
         }
         setState(() {
-          _comments = List<Map<String, dynamic>>.from(decoded);
+          _comments = List<Map<String, dynamic>>.from(decoded.map((comment) => {
+            'commentId': comment['id'],
+            'memberName': comment['memberName'],
+            'commentContent': comment['commentContent'],
+            'likeCount': comment['likeCount'],
+            'createdDate': comment['createdDate'],
+            'memberId': comment['memberId'],
+          }));
         });
       } catch (e) {
         debugPrint('댓글 JSON 디코딩 오류: $e');
@@ -86,6 +115,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
             'body': decoded['body'],
             'likeCount': decoded['likeCount'],
             'commentCount': decoded['commentCount'],
+            'memberId': decoded['memberId']?.toString(),
           };
         });
       } catch (e) {
@@ -103,6 +133,32 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
     setState(() {
       _isMine = true; // 서버 응답값 기반
     });
+  }
+
+  void _toggleCommentLike(int commentId, int index) async {
+    final String? accessToken = await AuthService().getAccessToken();
+    final uri = Uri.parse('http://182.222.119.214:8081/api/comments/$commentId/like');
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      setState(() {
+        final current = _comments[index];
+        final liked = (current['liked'] as bool?) ?? false;
+        final likeCount = (current['likeCount'] as int?) ?? 0;
+        _comments[index]['liked'] = !liked;
+        _comments[index]['likeCount'] = liked ? likeCount - 1 : likeCount + 1;
+        print("댓글 좋아요 성공");
+      });
+    } else {
+      debugPrint('댓글 좋아요 실패: ${response.body}');
+    }
   }
 
   @override
@@ -194,7 +250,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                         ),
                       ],
                     ),
-                    if (_isMine)
+                    if (_userId != null && _userId == _postData?['memberId'])
                       TextButton(
                         onPressed: () {
                           // 수정 기능 구현 예정
@@ -276,11 +332,58 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                     itemCount: _comments.length,
                     itemBuilder: (context, index) {
                       final comment = _comments[index];
+                      // Extract and format createdDate
+                      String formattedDate = '';
+                      if (comment['createdDate'] != null) {
+                        final dt = DateTime.tryParse(comment['createdDate']);
+                        if (dt != null) {
+                          formattedDate = dt.toLocal().toString().substring(0, 16);
+                        }
+                      }
                       return ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: const CircleAvatar(child: Icon(Icons.person)),
                         title: Text(comment['memberName'] ?? '익명'),
-                        subtitle: Text(comment['commentContent'] ?? ''),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              formattedDate,
+                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(comment['commentContent'] ?? ''),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                comment['liked'] == true ? Icons.favorite : Icons.favorite_border,
+                                color: comment['liked'] == true ? Colors.red : Colors.grey,
+                              ),
+                              onPressed: () {
+                                _toggleCommentLike(comment['commentId'], index);
+                              },
+                            ),
+                            Text('${comment['likeCount'] ?? 0}'),
+                            if (_userId != null && _userId == comment['memberName']?.toString())
+                              PopupMenuButton<String>(
+                                onSelected: (value) {
+                                  if (value == 'edit') {
+                                    _editComment(comment['commentId'], comment['commentContent']);
+                                  } else if (value == 'delete') {
+                                    _deleteComment(comment['commentId']);
+                                  }
+                                },
+                                itemBuilder: (context) => [
+                                  const PopupMenuItem(value: 'edit', child: Text('수정')),
+                                  const PopupMenuItem(value: 'delete', child: Text('삭제')),
+                                ],
+                              ),
+                          ],
+                        ),
                       );
                     },
                   ),
@@ -292,4 +395,69 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
       ),
     );
   }
+  void _editComment(int commentId, String currentContent) async {
+    final TextEditingController controller = TextEditingController(text: currentContent);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('댓글 수정'),
+        content: TextField(controller: controller, maxLines: 5),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
+          TextButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('저장')),
+        ],
+      ),
+    );
+
+    if (result != null && result.trim().isNotEmpty) {
+      final String? accessToken = await AuthService().getAccessToken();
+      final uri = Uri.parse('http://182.222.119.214:8081/api/comments/comments/$commentId');
+
+      final response = await http.put(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'commentContent': result.trim()}),
+      );
+
+      if (response.statusCode == 200) {
+        _fetchComments();
+      } else {
+        debugPrint('댓글 수정 실패: ${response.body}');
+      }
+    }
+  }
+
+  void _deleteComment(int commentId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('댓글 삭제'),
+        content: const Text('댓글을 삭제하시겠습니까?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('취소')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('삭제')),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final String? accessToken = await AuthService().getAccessToken();
+      final uri = Uri.parse('http://182.222.119.214:8081/api/comments/comments/$commentId');
+
+      final response = await http.delete(
+        uri,
+        headers: {'Authorization': 'Bearer $accessToken'},
+      );
+
+      if (response.statusCode == 204) {
+        _fetchComments();
+      } else {
+        debugPrint('댓글 삭제 실패: ${response.body}');
+      }
+    }
+  }
+
 }

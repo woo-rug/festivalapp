@@ -65,7 +65,7 @@ class _PageIndexerState extends State<PageIndexer> {
                 child: Container(
                   //height: 72, // 고정 높이로 설정 (SafeArea 길이 포함 안함)
                   decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 222, 222, 222).withOpacity(0.85),
+                    color: const Color.fromARGB(255, 243, 243, 243).withOpacity(0.5),
                     borderRadius: BorderRadius.circular(32),
                     border: Border.all(
                       color: const Color.fromARGB(232, 223, 223, 223),
