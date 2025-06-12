@@ -151,12 +151,15 @@ class _MainPageBody extends StatelessWidget {
           future: () async {
             final storage = FlutterSecureStorage();
             final token = await storage.read(key: 'accessToken') ?? '';
-            return await http.get(
+            final response = await http.post(
               Uri.parse('http://182.222.119.214:8081/api/recommend'),
               headers: {
                 'Authorization': 'Bearer $token',
               },
             );
+            print('응답 코드: ${response.statusCode}');
+            print('응답 바디: ${response.body}');
+            return response;
           }(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -165,9 +168,23 @@ class _MainPageBody extends StatelessWidget {
               return const Center(child: Text('추천 정보를 불러오지 못했습니다.'));
             }
 
-            final Map<String, dynamic> responseData = json.decode(snapshot.data!.body);
-            final List<dynamic> recommends = responseData['data'] ?? [];
-            print('추천 데이터: $recommends');
+            final List<dynamic> recommends = (json.decode(snapshot.data!.body) as List).map((item) {
+              final List<dynamic> imageUrls = item['imageUrls'] ?? [];
+              final String imagePath = imageUrls.isNotEmpty ? (imageUrls[0]?.toString() ?? '') : '';
+              final String title = item['contentName']?.toString() ?? '';
+              final String startDate = item['startDateTime']?.toString().split("T")[0] ?? '';
+              final String endDate = item['endDateTime']?.toString().split("T")[0] ?? '';
+              final dynamic rawId = item['id'];
+              final String id = rawId != null ? rawId.toString() : '';
+              print('파싱된 콘텐츠 ID: $id');
+
+              return {
+                'recommendid': id,
+                'imagePath': imagePath,
+                'title': title,
+                'dateRange': '$startDate ~ $endDate',
+              };
+            }).toList();
 
             if (recommends.length < 6) {
               return const Center(child: Text('추천할 문화생활을 찾고 있어요! 찾기 완료되면 추천해드릴게요.'));
@@ -186,10 +203,25 @@ class _MainPageBody extends StatelessWidget {
                 ),
                 LeftAlignedSnapSlider(
                   items: recommends.sublist(0, 3).map((item) {
-                    return RecommandResultButton(
-                      imagePath: item['imagePath'],
-                      title: item['title'],
-                      dateRange: item['dateRange'],
+                    return GestureDetector(
+                      onTap: () {
+                        try {
+                          final contentId = item['recommendid'];
+                          print('콘텐츠 ID: $contentId');
+
+                          Navigator.of(context).pushNamed(
+                            '/contents_detail',
+                            arguments: contentId,
+                          );
+                        } catch (e) {
+                          print('onTap error: $e');
+                        }
+                      },
+                      child: RecommandResultButton(
+                        imagePath: item['imagePath'],
+                        title: item['title'],
+                        dateRange: item['dateRange'],
+                      ),
                     );
                   }).toList(),
                 ),
@@ -203,10 +235,25 @@ class _MainPageBody extends StatelessWidget {
                 ),
                 LeftAlignedSnapSlider(
                   items: recommends.sublist(3, 6).map((item) {
-                    return RecommandResultButton(
-                      imagePath: item['imagePath'],
-                      title: item['title'],
-                      dateRange: item['dateRange'],
+                    return GestureDetector(
+                      onTap: () {
+                        final contentId = item['recommendid'];
+                        print('콘텐츠 ID: $contentId');
+
+                        if (contentId != null && contentId.isNotEmpty) {
+                            Navigator.of(context).pushNamed(
+                              '/contents_detail',
+                              arguments: contentId,
+                            );
+                        } else {
+                          print('유효하지 않은 콘텐츠 ID입니다.');
+                        }
+                      },
+                      child: RecommandResultButton(
+                        imagePath: item['imagePath'],
+                        title: item['title'],
+                        dateRange: item['dateRange'],
+                      ),
                     );
                   }).toList(),
                 ),
@@ -240,9 +287,9 @@ class _CardSliderWithStaticDotsState extends State<CardSliderWithStaticDots> {
   Timer? _autoSlideTimer;
 
   final List<Map<String, String>> items = [
-    {'image': 'assets/images/event1.jpg', 'title': '드디어 시작된 대학축제!', 'subtitle': '다양한 대학 축제들을 확인해보세요.'},
-    {'image': 'assets/images/event2.jpg', 'title': '날씨 좋은데...', 'subtitle': '야구장 가서 경기보는건 어때요?'},
-    {'image': 'assets/images/event3.jpg', 'title': '이런 연극은 어때요?', 'subtitle': '영화보다 재밌을지도 몰라요!'},
+    {'image': 'assets/images/event1.jpg', 'title': '드디어 시작된 대학축제!', 'subtitle': '다양한 대학 축제들을 확인해보세요.', 'id': '5'},
+    {'image': 'assets/images/event2.jpg', 'title': '날씨 좋은데...', 'subtitle': '야구장 가서 경기보는건 어때요?', 'id': '10'},
+    {'image': 'assets/images/event3.jpg', 'title': '이런 연극은 어때요?', 'subtitle': '영화보다 재밌을지도 몰라요!', 'id': '15'},
   ];
 
   @override
@@ -296,7 +343,7 @@ class _CardSliderWithStaticDotsState extends State<CardSliderWithStaticDots> {
                   onTap: () {
                     Navigator.of(context).pushNamed(
                       '/contents_detail',
-                      arguments: items[index]['title']!,
+                      arguments: items[index]['id']!,
                     );
                   },
                   child: Padding(
@@ -329,7 +376,7 @@ class _CardSliderWithStaticDotsState extends State<CardSliderWithStaticDots> {
                                     item['title']!,
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 20,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -339,7 +386,7 @@ class _CardSliderWithStaticDotsState extends State<CardSliderWithStaticDots> {
                                     style: const TextStyle(
                                       color: Color.fromARGB(255, 209, 209, 209),
                                       fontWeight: FontWeight.w500,
-                                      fontSize: 14,
+                                      fontSize: 12,
                                     ),
                                   ),
                                 ],

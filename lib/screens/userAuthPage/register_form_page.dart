@@ -228,6 +228,7 @@ class SignUpFormContent extends StatefulWidget {
 }
 
 class _SignUpFormContentState extends State<SignUpFormContent> {
+  bool _isSendingEmail = false;
   final genderList = ['선택하세요', '남성', '여성'];
 
   bool? isPasswordMatch;
@@ -375,11 +376,17 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
   }
 
   Future<void> _sendEmailVerification() async {
+    setState(() {
+      _isSendingEmail = true;
+    });
     final response = await http.post(
       Uri.parse('http://182.222.119.214:8081/api/members/join/send-email'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': widget.emailController.text}),
     );
+    setState(() {
+      _isSendingEmail = false;
+    });
     if (response.statusCode == 204) {
       print("이메일 보내기 위한 서버 접속 성공");
       setState(() {
@@ -413,7 +420,14 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
         children: [
           TitleModules.title("회원 정보 입력"),
           const SizedBox(height: 16),
-
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8.0),
+            child: Text(
+              "계정 정보",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+            ),
+          ),
+          // 1. 아이디 입력 + 중복확인
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -433,7 +447,8 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
             ],
           ),
           if (_idDuplicateMessage != null)
-            Padding(padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
+            Padding(
+              padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
               child: Text(
                 _idDuplicateMessage!,
                 style: TextStyle(
@@ -443,7 +458,79 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
               ),
             ),
           const SizedBox(height: 16),
-
+          // 2. 이메일 입력 + 전송 버튼
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: CommonTextField(
+                  label: "이메일",
+                  controller: widget.emailController,
+                  hintText: "이메일 입력",
+                  onChanged: _validateEmailFormat,
+                  readOnly: !_emailEditable,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  GradientButton(
+                    text: '이메일 보내기',
+                    onPressed: _isSendingEmail ? null : _sendEmailVerification,
+                    isBlue: true,
+                    width: 150,
+                  ),
+                  if (_isSendingEmail)
+                    const Positioned.fill(
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          if (!isEmailValid)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(0, 8, 8, 8),
+              child: Text("❌ 이메일 형식이 맞지 않습니다.", style: TextStyle(color: Colors.red, fontSize: 13)),
+            ),
+          if (_emailSendMessage != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                _emailSendMessage!,
+                style: TextStyle(
+                  color: _emailSendMessage!.startsWith("✅") ? Colors.green : Colors.red,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          const SizedBox(height: 16),
+          // 3. 인증번호 입력 + 인증 버튼
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: CommonTextField(
+                  label: "인증번호",
+                  controller: widget.emailCodeController,
+                  onChanged: (_) => _checkAllFilled(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GradientButton(
+                text: '인증하기',
+                onPressed: _verifyEmailCode,
+                isBlue: true,
+                width: 150,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // 4. 비밀번호 + 확인
           CommonTextField(
             label: "비밀번호",
             controller: widget.pwController,
@@ -468,113 +555,35 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
               isPasswordMatch == true ? "비밀번호가 일치합니다." : "비밀번호가 일치하지 않습니다.",
               style: TextStyle(color: isPasswordMatch == true ? Colors.green : Colors.red, fontSize: 13),
             ),
-
           const SizedBox(height: 16),
+          Divider(),
+          const SizedBox(height: 16),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8.0),
+            child: Text(
+              "개인 정보",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+            ),
+          ),
+          // 6. 이름
           CommonTextField(label: "이름", controller: widget.nameController, onChanged: (_) => _checkAllFilled()),
           const SizedBox(height: 16),
-          CommonTextField(
-            label: "나이",
-            controller: widget.ageController,
-            onChanged: _validateAge,
-          ),
-          if (!isAgeValid)
-            const Padding(padding: EdgeInsets.fromLTRB(0, 8, 8, 8), child: Text("❌ 올바른 나이값을 입력하세요.", style: TextStyle(color: Colors.red, fontSize: 13)),),
-          const SizedBox(height: 16),
-
+          // 7. 닉네임 + 중복확인
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
                 child: CommonTextField(
-                  label: "이메일",
-                  controller: widget.emailController,
-                  hintText: "이메일 입력",
-                  onChanged: _validateEmailFormat,
-                  readOnly: !_emailEditable,
-                ),
-              ),
-              const SizedBox(width: 8),
-              GradientButton(text: '이메일 보내기', onPressed: _sendEmailVerification, isBlue: true, width: 150),
-            ],
-          ),
-          if (!isEmailValid)
-            const Padding(padding: EdgeInsets.fromLTRB(0, 8, 8, 8), child: Text("❌ 이메일 형식이 맞지 않습니다.", style: TextStyle(color: Colors.red, fontSize: 13)),),
-          if (_emailSendMessage != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                _emailSendMessage!,
-                style: TextStyle(
-                  color: _emailSendMessage!.startsWith("✅") ? Colors.green : Colors.red,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: CommonTextField(
-                  label: "인증번호",
-                  controller: widget.emailCodeController,
-                  onChanged: (_) => _checkAllFilled(),
-                ),
-              ),
-              const SizedBox(width: 8),
-              GradientButton(
-                text: '인증하기',
-                onPressed: _verifyEmailCode,
-                isBlue: true,
-                width: 150,
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: CommonTextField(label: "주소", controller: widget.locationController, readOnly: true),
-              ),
-              const SizedBox(width: 8),
-              GradientButton(
-                text: '주소 검색',
-                onPressed: () async {
-                  final selectedAddress = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => PostcodePage(),
-                    ),
-                  );
-
-                  if (selectedAddress != null) {
+                  label: "닉네임",
+                  controller: widget.nicknameController,
+                  onChanged: (_) {
                     setState(() {
-                      // Assume selectedAddress has a .roadAddress property.
-                      widget.locationController.text = selectedAddress.roadAddress;
+                      isNicknameAvailable = false;
+                      _nicknameDuplicateMessage = null;
                     });
                     _checkAllFilled();
-                  }
-                },
-                isBlue: true,
-                width: 150,
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: CommonTextField(label: "닉네임", controller: widget.nicknameController, onChanged: (_) {
-                  setState(() {
-                    isNicknameAvailable = false;
-                    _nicknameDuplicateMessage = null;
-                  });
-                  _checkAllFilled();
-                }),
+                  },
+                ),
               ),
               const SizedBox(width: 8),
               GradientButton(text: '중복확인', onPressed: _checkNicknameDuplicate, isBlue: true, width: 150),
@@ -591,8 +600,8 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
                 ),
               ),
             ),
-
           const SizedBox(height: 16),
+          // 8. 성별 (이제 나이보다 앞에 위치)
           DropdownButtonFormField<String>(
             value: widget.selectedGender,
             decoration: const InputDecoration(
@@ -614,6 +623,53 @@ class _SignUpFormContentState extends State<SignUpFormContent> {
               });
             },
           ),
+          const SizedBox(height: 16),
+          // 9. 나이 (성별 아래로 이동)
+          CommonTextField(
+            label: "나이",
+            controller: widget.ageController,
+            onChanged: _validateAge,
+          ),
+          if (!isAgeValid)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(0, 8, 8, 8),
+              child: Text("❌ 올바른 나이값을 입력하세요.", style: TextStyle(color: Colors.red, fontSize: 13)),
+            ),
+          if (!isAgeValid)
+            const SizedBox(height: 16),
+          if (isAgeValid)
+            const SizedBox(height: 16),
+          // 10. 주소 검색
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: CommonTextField(label: "주소", controller: widget.locationController, readOnly: true),
+              ),
+              const SizedBox(width: 8),
+              GradientButton(
+                text: '주소 검색',
+                onPressed: () async {
+                  final selectedAddress = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PostcodePage(),
+                    ),
+                  );
+                  if (selectedAddress != null) {
+                    setState(() {
+                      // Assume selectedAddress has a .roadAddress property.
+                      widget.locationController.text = selectedAddress.roadAddress;
+                    });
+                    _checkAllFilled();
+                  }
+                },
+                isBlue: true,
+                width: 150,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
         ],
       ),
     );

@@ -110,60 +110,53 @@ class RecommandResultButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => ContentsDetailPage(contentsID: '축제',)),
-        );
-      },
-      child: Container(
-        width: 160,
-        height: 200,
-        margin: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
+    return Container(
+      width: 160,
+      height: 200,
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              height: 150,
+              child: Image.network(
+                imagePath,
                 height: 150,
-                child: Image.asset(
-                  imagePath,
-                  height: 150,
-                  fit: BoxFit.cover,
-                ),
-              )
-            ),
-            Container(
-              alignment: Alignment.centerLeft,
-              padding: EdgeInsets.only(top: 8, left:8, right: 8),
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-                overflow: TextOverflow.ellipsis,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image),
               ),
-            ),
-            Container(
-              alignment: Alignment.centerLeft,
-              padding: EdgeInsets.only(top: 4, left:8, right: 8),
-              child: Text(
-                dateRange,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.black54,
-                ),
-                overflow: TextOverflow.ellipsis,
+            )
+          ),
+          Container(
+            alignment: Alignment.centerLeft,
+            padding: EdgeInsets.only(top: 8, left:8, right: 8),
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
+          ),
+          Container(
+            alignment: Alignment.centerLeft,
+            padding: EdgeInsets.only(top: 4, left:8, right: 8),
+            child: Text(
+              dateRange,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.black54,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }

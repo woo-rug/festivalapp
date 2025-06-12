@@ -35,12 +35,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primaryColor: Color(0xFF1976D2),
           colorScheme: ColorScheme.fromSeed(
             seedColor: Color(0xFF1976D2),
           ),
-        fontFamily: 'NotoSansKR',
+        fontFamily: 'Noto Sans KR',
       ),
       initialRoute: '/',
       routes:{
@@ -56,15 +57,6 @@ class MyApp extends StatelessWidget {
         ),
         '/map' : (context) => PostcodePage(),
       }
-      // home: PageIndexer(
-      //   pages: const [
-      //     MainPage(),
-      //     Center(child: Text('탐색 페이지')),
-      //     Center(child: Text('폭죽 페이지')),
-      //     Center(child: Text('기록 페이지')),
-      //     Center(child: Text('프로필 페이지')),
-      //   ],
-      // ),
     );
   }
 }

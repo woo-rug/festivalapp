@@ -13,7 +13,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 Future<Map<String, dynamic>> fetchContentsDetail(String id, AuthProvider authProvider, BuildContext context) async {
-  final url = Uri.parse('http://182.222.119.214:8081/api/contents/$id');
+  print("id값 : $id");
+  int intID = int.parse(id);
+  final url = Uri.parse('http://182.222.119.214:8081/api/contents/$intID');
   final client = AuthHttpClient(authProvider, context);
   final request = http.Request('GET', url);
   final streamedResponse = await client.send(request);
@@ -43,6 +45,7 @@ class ContentsDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('ContentsDetailPage로 전달된 ID: $contentsID');
     return FlatScreen(
       appBar: const Text(
         "상세", // 추후에 id값에 맞는 제목으로 수정해야 함.

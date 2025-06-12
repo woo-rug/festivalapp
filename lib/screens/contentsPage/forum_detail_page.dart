@@ -82,6 +82,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
             'likeCount': comment['likeCount'],
             'createdDate': comment['createdDate'],
             'memberId': comment['memberId'],
+            'liked': comment['liked'],
           }));
         });
       } catch (e) {
@@ -95,7 +96,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
   void _fetchPostDetail() async {
     final String? accessToken = await AuthService().getAccessToken();
 
-    final uri = Uri.parse('http://182.222.119.214:8081/api/articles/${widget.postId}');
+    final uri = Uri.parse('http://182.222.119.214:8081/api/articles/detail/${widget.postId}');
     final response = await http.get(
       uri,
       headers: {
@@ -103,7 +104,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
         'Authorization': 'Bearer $accessToken',
       },
     );
-    debugPrint('GET /api/articles/${widget.postId} 응답 코드: ${response.statusCode}');
+    debugPrint('GET /api/articles/detail/${widget.postId} 응답 코드: ${response.statusCode}');
     if (response.statusCode == 200) {
       try {
         final decoded = jsonDecode(response.body);
@@ -117,6 +118,9 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
             'commentCount': decoded['commentCount'],
             'memberId': decoded['memberId']?.toString(),
           };
+          _isLiked = decoded['liked'] ?? false;
+          _likeCount = decoded['likeCount'] ?? 0;
+          _commentCount = decoded['commentCount'] ?? 0;
         });
       } catch (e) {
         debugPrint('JSON 디코딩 오류: $e');
@@ -138,7 +142,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
   void _toggleCommentLike(int commentId, int index) async {
     final String? accessToken = await AuthService().getAccessToken();
     final uri = Uri.parse('http://182.222.119.214:8081/api/comments/$commentId/like');
-
+    debugPrint('POST 요청: $uri');
     final response = await http.post(
       uri,
       headers: {
@@ -170,7 +174,17 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
   @override
   Widget build(BuildContext context) {
     final title = _postData?['title'] ?? '제목 없음';
-    final dateTime = _postData?['createDate']?.toString() ?? '날짜 없음';
+    final dateTimeRaw = _postData?['createDate']?.toString();
+    String dateTime = '날짜 없음';
+    if (dateTimeRaw != null) {
+      try {
+        final dt = DateTime.parse(dateTimeRaw).toLocal();
+        dateTime = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
+                   '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+      } catch (_) {
+        dateTime = dateTimeRaw.replaceFirst('T', ' ');
+      }
+    }
     final body = _postData?['body'] ?? '내용 없음';
     final likeCount = _postData?['likeCount'] ?? 0;
     final commentCount = _postData?['commentCount'] ?? 0;
@@ -223,12 +237,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                     Row(
                       children: [
                         GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isLiked = !_isLiked;
-                              _likeCount += _isLiked ? 1 : -1;
-                            });
-                          },
+                          onTap: _togglePostLike,
                           child: Row(
                             children: [
                               Icon(
@@ -355,34 +364,44 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                             Text(comment['commentContent'] ?? ''),
                           ],
                         ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                comment['liked'] == true ? Icons.favorite : Icons.favorite_border,
-                                color: comment['liked'] == true ? Colors.red : Colors.grey,
-                              ),
-                              onPressed: () {
-                                _toggleCommentLike(comment['commentId'], index);
-                              },
-                            ),
-                            Text('${comment['likeCount'] ?? 0}'),
-                            if (_userId != null && _userId == comment['memberName']?.toString())
-                              PopupMenuButton<String>(
-                                onSelected: (value) {
-                                  if (value == 'edit') {
-                                    _editComment(comment['commentId'], comment['commentContent']);
-                                  } else if (value == 'delete') {
-                                    _deleteComment(comment['commentId']);
+                        trailing: SizedBox(
+                          width: 120,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  comment['liked'] == true ? Icons.favorite : Icons.favorite_border,
+                                  color: comment['liked'] == true ? Colors.red : Colors.grey,
+                                ),
+                                onPressed: () {
+                                  final rawId = comment['commentId'];
+                                  final commentId = rawId is int ? rawId : int.tryParse(rawId.toString());
+                                  debugPrint('하트 클릭됨 - commentId: $commentId (${commentId.runtimeType})');
+                                  if (commentId != null) {
+                                    _toggleCommentLike(commentId, index);
+                                  } else {
+                                    debugPrint('commentId 변환 실패: $rawId');
                                   }
                                 },
-                                itemBuilder: (context) => [
-                                  const PopupMenuItem(value: 'edit', child: Text('수정')),
-                                  const PopupMenuItem(value: 'delete', child: Text('삭제')),
-                                ],
                               ),
-                          ],
+                              Text('${comment['likeCount'] ?? 0}'),
+                              if (_userId != null && _userId == comment['memberName']?.toString())
+                                PopupMenuButton<String>(
+                                  onSelected: (value) {
+                                    if (value == 'edit') {
+                                      _editComment(comment['commentId'], comment['commentContent']);
+                                    } else if (value == 'delete') {
+                                      _deleteComment(comment['commentId']);
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(value: 'edit', child: Text('수정')),
+                                    const PopupMenuItem(value: 'delete', child: Text('삭제')),
+                                  ],
+                                ),
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -459,5 +478,27 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
       }
     }
   }
+  void _togglePostLike() async {
+    final String? accessToken = await AuthService().getAccessToken();
+    final uri = Uri.parse('http://182.222.119.214:8081/api/articles/${widget.postId}/like');
+    debugPrint('게시글 좋아요 요청: $uri');
+    final response = await http.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+    );
 
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      setState(() {
+        _isLiked = !_isLiked;
+        _likeCount += _isLiked ? 1 : -1;
+        _postData?['likeCount'] = _likeCount;
+      });
+    } else {
+      debugPrint('게시글 좋아요 실패: ${response.body}');
+    }
+  }
 }
+

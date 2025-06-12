@@ -73,24 +73,33 @@ class _ForumPageState extends State<ForumPage> {
         });
       }
     } else {
-      final uri = Uri.parse('http://182.222.119.214:8081/api/articles/${widget.boardId}/search');
-      final response = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $accessToken',
-        },
-      );
+      List<Map<String, dynamic>> allFetched = [];
+      int page = 0;
+      bool hasMore = true;
 
-      debugPrint("get /api/articles/ 응답 코드: ${response.statusCode}");
-      debugPrint("get /api/articles/ 응답 본문: ${response.body}");
+      while (page < 10 && hasMore) {
+        final uri = Uri.parse('http://182.222.119.214:8081/api/articles/list/${widget.boardId}?page=$page&size=100');
+        final response = await http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $accessToken',
+          },
+        );
 
-      if (response.statusCode == 200) {
+        if (response.statusCode != 200) break;
+
         final Map<String, dynamic> data = jsonDecode(response.body);
-        setState(() {
-          forums = [data];
-        });
+        final List<Map<String, dynamic>> contentList = List<Map<String, dynamic>>.from(data['content']);
+
+        allFetched.addAll(contentList);
+        hasMore = !(data['last'] == true);
+        page += 1;
       }
+
+      setState(() {
+        forums = allFetched.where((item) => item['subCategoryId'] == widget.boardId).toList();
+      });
     }
   }
 
@@ -166,7 +175,7 @@ class _ForumPageState extends State<ForumPage> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              (forum['body'] ?? '') as String,
+                              (widget.category == 0 ? forum['body'] : forum['previewBody']) ?? '' as String,
                               style: const TextStyle(fontSize: 13, color: Colors.black87),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
